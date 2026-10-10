@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Representation only; canonical JSON, byte limits, authorization and token ownership are additionally checked by the owner.",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "bytes": {
+      "type": "string",
+      "pattern": "^(?:[A-Za-z0-9_-]{4})*(?:[A-Za-z0-9_-][AQgw]|[A-Za-z0-9_-]{2}[AEIMQUYcgkosw048])?$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+    },
+    "nextHop": {
+      "type": "string",
+      "pattern": "^(?:local:[a-z0-9][a-z0-9-]{0,62}|https://(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?|\\[[0-9a-f:.]+\\]):[1-9][0-9]{0,4})$",
+      "$comment": "NetworkTarget additionally enforces canonical host/IP, labels, port 1-65535 and no aliases. Shape alone never establishes reachability or identity."
+    },
+    "upDepth": {
+      "type": "string",
+      "pattern": "^(?:-1|0|[1-9][0-9]*)$"
+    },
+    "up": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "operationId": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/bytes"
+        },
+        {
+          "minLength": 2,
+          "maxLength": 171
+        }
+      ]
+    },
+    "error": {
+      "enum": [
+        "INVALID",
+        "DENIED",
+        "UNAVAILABLE",
+        "NOT_FOUND",
+        "GAP",
+        "INVALID_CONTEXT",
+        "RESOURCE_EXHAUSTED",
+        "CONFLICT",
+        "INDETERMINATE",
+        "OUTCOME_UNKNOWN",
+        "UNSUPPORTED_TYPE"
+      ]
+    },
+    "space-handle": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "space-handle"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "record-revision": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "record-revision"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "mount-revision": {
+      "type": "object",
+      "properties": {
+        "owner": { "$ref": "#/$defs/uuid" },
+        "kind": { "const": "mount-revision" },
+        "value": { "$ref": "#/$defs/digest" }
+      },
+      "required": ["owner", "kind", "value"],
+      "additionalProperties": false
+    },
+    "attachment-revision": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "attachment-revision"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "contact-revision": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "contact-revision"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "transition-revision": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "transition-revision"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": ["owner", "kind", "value"],
+      "additionalProperties": false
+    },
+    "carrier-revision": {
+      "type": "object",
+      "properties": {
+        "owner": { "$ref": "#/$defs/uuid" },
+        "kind": { "const": "carrier-revision" },
+        "value": { "$ref": "#/$defs/digest" }
+      },
+      "required": ["owner", "kind", "value"],
+      "additionalProperties": false
+    },
+    "read-receipt": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "read-receipt"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "query-continuation": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "query-continuation"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "observation-preparation": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "observation-preparation"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "observation-cursor": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "observation-cursor"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "change-id": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "change-id"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "change-basis": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/uuid"
+        },
+        "kind": {
+          "const": "change-basis"
+        },
+        "value": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

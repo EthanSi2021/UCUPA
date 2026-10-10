@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "state": {
+          "const": "NOT_FOUND"
+        },
+        "typeRef": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+        }
+      },
+      "required": [
+        "receipt",
+        "state",
+        "typeRef"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "state": {
+          "const": "PRESENT"
+        },
+        "typeRef": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+        },
+        "payload": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/bytes"
+        },
+        "revision": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        }
+      },
+      "required": [
+        "receipt",
+        "state",
+        "typeRef",
+        "payload",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+          },
+          "maxItems": 256,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "receipt",
+        "types"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "COMMITTED",
+            "UNCHANGED"
+          ]
+        },
+        "revision": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        }
+      },
+      "required": [
+        "status",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "types.schema.json#/$defs/group"
+          },
+          "maxItems": 256,
+          "minItems": 0
+        },
+        "nextCursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "groups",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "released": {
+          "const": true
+        }
+      },
+      "required": [
+        "released"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

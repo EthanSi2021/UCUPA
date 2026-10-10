@@ -1,0 +1,126 @@
+syntax = "proto3";
+package ucupa.realm;
+option go_package = "ucupa/ucupa-realm/bindings/go/protobuf;realmpb";
+import "shared/api/network.proto";
+
+// The read-only target check confirms the actual Realm identity behind the
+// pinned address. It creates no caller, view or grant and registers nothing.
+service RealmTargetService {
+  rpc CheckTarget(CheckTargetRequest) returns (CheckTargetResponse);
+}
+message CheckTargetRequest {}
+message CheckTargetResponse { optional string realm_id = 1 [(ucupa.network.required_value) = true]; }
+
+// Identity establishment and derivation reuse the original kernel rules.
+// Handles are unguessable run-local references, never serialized kernel proof.
+service RealmIdentityService {
+  rpc EstablishCaller(EstablishCallerRequest) returns (EstablishCallerResponse);
+  rpc BeginChallenge(BeginChallengeRequest) returns (BeginChallengeResponse);
+  rpc EstablishForeignCaller(EstablishForeignCallerRequest) returns (EstablishForeignCallerResponse);
+  rpc ForkCaller(ForkCallerRequest) returns (ForkCallerResponse);
+  rpc ReleaseHandle(ReleaseHandleRequest) returns (ReleaseHandleResponse);
+}
+message EstablishCallerRequest {
+  optional string audience = 1 [(ucupa.network.required_value) = true];
+  optional bytes credential_id = 2 [(ucupa.network.required_value) = true];
+  optional bytes secret = 3 [(ucupa.network.required_value) = true];
+}
+message EstablishCallerResponse {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  optional string subject_realm = 2 [(ucupa.network.required_value) = true];
+  optional string subject_principal = 3 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+}
+message BeginChallengeRequest {}
+message BeginChallengeResponse {
+  optional bytes challenge = 1 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message EstablishForeignCallerRequest {
+  optional bytes payload = 1 [(ucupa.network.required_value) = true];
+  optional bytes signature = 2 [(ucupa.network.required_value) = true];
+  optional bytes challenge = 3 [(ucupa.network.required_value) = true];
+  // P6 relay actor, authenticated by the receiving Core. This is not the
+  // receiving service owner, which remains bound by mTLS and the challenge.
+  optional string actor = 4 [(ucupa.network.required_value) = true];
+}
+message EstablishForeignCallerResponse {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  optional string subject_realm = 2 [(ucupa.network.required_value) = true];
+  optional string subject_principal = 3 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+}
+message ForkCallerRequest { optional bytes caller = 1 [(ucupa.network.required_value) = true]; }
+message ForkCallerResponse {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message ReleaseHandleRequest { optional bytes handle = 1 [(ucupa.network.required_value) = true]; }
+message ReleaseHandleResponse {}
+
+// Every operation revalidates online at the kernel; a handle never carries a
+// reusable offline Allow. The four-state decision is never collapsed to bool.
+service RealmAuthorizationService {
+  rpc AuthorizeView(AuthorizeViewRequest) returns (AuthorizeViewResponse);
+  rpc ValidateView(ValidateViewRequest) returns (ValidateViewResponse);
+  rpc CaptureDenialView(CaptureDenialViewRequest) returns (CaptureDenialViewResponse);
+  rpc ValidateDenialView(ValidateDenialViewRequest) returns (ValidateDenialViewResponse);
+}
+message AuthorizeViewRequest {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  repeated Requirement requirements = 2 [(ucupa.network.required_value) = true];
+}
+message AuthorizeViewResponse {
+  optional Decision decision = 1 [(ucupa.network.required_value) = true];
+  optional bytes view = 2;
+}
+message ValidateViewRequest {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  optional bytes view = 2 [(ucupa.network.required_value) = true];
+  repeated Requirement requirements = 3 [(ucupa.network.required_value) = true];
+}
+message ValidateViewResponse { optional Decision decision = 1 [(ucupa.network.required_value) = true]; }
+message CaptureDenialViewRequest {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  Requirement requirement = 2 [(ucupa.network.required_value) = true];
+}
+message CaptureDenialViewResponse {
+  optional Decision decision = 1 [(ucupa.network.required_value) = true];
+  optional bytes denial = 2;
+}
+message ValidateDenialViewRequest {
+  optional bytes caller = 1 [(ucupa.network.required_value) = true];
+  optional bytes denial = 2 [(ucupa.network.required_value) = true];
+  Requirement requirement = 3 [(ucupa.network.required_value) = true];
+}
+message ValidateDenialViewResponse { optional Decision decision = 1 [(ucupa.network.required_value) = true]; }
+
+// Requirements keep the exact kernel scope kinds; the receiving owner derives
+// them from its own operation, never from a client self-declared subject.
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  VALID = 1 [(ucupa.network.literal) = "valid"];
+  CHANGED = 2 [(ucupa.network.literal) = "changed"];
+  DENIED = 3 [(ucupa.network.literal) = "denied"];
+  UNAVAILABLE = 4 [(ucupa.network.literal) = "unavailable"];
+}
+enum ScopeKind {
+  SCOPE_UNSPECIFIED = 0;
+  CORE_ELEMENT = 1 [(ucupa.network.literal) = "core-element"];
+  FACET_ELEMENT = 2 [(ucupa.network.literal) = "facet-element"];
+  FACET_KEY = 3 [(ucupa.network.literal) = "facet-key"];
+  REALM = 4 [(ucupa.network.literal) = "realm"];
+  AUTHORITY = 5 [(ucupa.network.literal) = "authority"];
+  ANCHOR_CLOSURE = 6 [(ucupa.network.literal) = "anchor-closure"];
+}
+message Requirement {
+  optional string permission = 1 [(ucupa.network.required_value) = true];
+  Scope scope = 2 [(ucupa.network.required_value) = true];
+}
+message Scope {
+  optional ScopeKind kind = 1 [(ucupa.network.required_value) = true];
+  optional string authority = 2;
+  optional string element = 3;
+  optional bytes facet = 4;
+  optional string realm = 5;
+}

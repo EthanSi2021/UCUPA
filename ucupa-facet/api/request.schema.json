@@ -1,0 +1,400 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "mutation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "put"
+            },
+            "access": {
+              "$ref": "types.schema.json#/$defs/access"
+            },
+            "typeRef": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+            },
+            "payload": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/bytes"
+            },
+            "expected": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "absent": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "absent"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                    }
+                  },
+                  "required": [
+                    "revision"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            }
+          },
+          "required": [
+            "op",
+            "access",
+            "typeRef",
+            "payload",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "delete"
+            },
+            "access": {
+              "$ref": "types.schema.json#/$defs/access"
+            },
+            "typeRef": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+            },
+            "expected": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            }
+          },
+          "required": [
+            "op",
+            "access",
+            "typeRef",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "get"
+        },
+        "access": {
+          "$ref": "types.schema.json#/$defs/access"
+        },
+        "typeRef": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+        },
+        "prepareObserve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "access",
+        "typeRef"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "list-types"
+        },
+        "access": {
+          "$ref": "types.schema.json#/$defs/access"
+        },
+        "prepareObserve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "access"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "put"
+        },
+        "access": {
+          "$ref": "types.schema.json#/$defs/access"
+        },
+        "typeRef": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+        },
+        "payload": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/bytes"
+        },
+        "expected": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "absent": {
+                  "const": true
+                }
+              },
+              "required": [
+                "absent"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "revision": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                }
+              },
+              "required": [
+                "revision"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        }
+      },
+      "required": [
+        "op",
+        "access",
+        "typeRef",
+        "payload",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "delete"
+        },
+        "access": {
+          "$ref": "types.schema.json#/$defs/access"
+        },
+        "typeRef": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+        },
+        "expected": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        }
+      },
+      "required": [
+        "op",
+        "access",
+        "typeRef",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "begin-observe"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        }
+      },
+      "required": [
+        "op",
+        "preparation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "poll"
+        },
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        },
+        "limit": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/limit"
+        }
+      },
+      "required": [
+        "op",
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "release-observe"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        }
+      },
+      "required": [
+        "op",
+        "preparation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "release-observe"
+        },
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "op",
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "recover-outcome"
+        },
+        "access": {
+          "$ref": "types.schema.json#/$defs/access"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "request": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "put"
+                },
+                "access": {
+                  "$ref": "types.schema.json#/$defs/access"
+                },
+                "typeRef": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+                },
+                "payload": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/bytes"
+                },
+                "expected": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "absent": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "absent"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                        }
+                      },
+                      "required": [
+                        "revision"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                }
+              },
+              "required": [
+                "op",
+                "access",
+                "typeRef",
+                "payload",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "delete"
+                },
+                "access": {
+                  "$ref": "types.schema.json#/$defs/access"
+                },
+                "typeRef": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/digest"
+                },
+                "expected": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                }
+              },
+              "required": [
+                "op",
+                "access",
+                "typeRef",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "access",
+        "operationId",
+        "request"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

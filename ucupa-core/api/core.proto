@@ -1,0 +1,1194 @@
+syntax = "proto3";
+package ucupa.core;
+option go_package = "ucupa/ucupa-core/bindings/go/protobuf;corepb";
+import "shared/api/network.proto";
+
+service WriterControlService {
+ rpc InspectWriter(ucupa.network.WriterInspectRequest) returns (ucupa.network.WriterResponse);
+ rpc HandoffWriter(ucupa.network.WriterHandoffRequest) returns (ucupa.network.WriterResponse);
+}
+
+// Source and parent control. Recovery supplies a target approval, never caller-authored
+// fence/decision evidence. Operation IDs retain their exact bytes across retries.
+service TransitionControlService {
+ rpc BeginTransition(BeginTransitionRequest) returns (TransitionResponse);
+ rpc InspectTransition(InspectTransitionRequest) returns (TransitionResponse);
+ rpc CancelTransition(CancelTransitionRequest) returns (TransitionResponse);
+ rpc RecoverTransition(RecoverTransitionRequest) returns (TransitionResponse);
+ rpc BeginCarrierTransition(BeginCarrierTransitionRequest) returns (CarrierTransitionResponse);
+ rpc InspectCarrierTransition(InspectCarrierTransitionRequest) returns (CarrierTransitionResponse);
+ rpc CancelCarrierTransition(CancelCarrierTransitionRequest) returns (CarrierTransitionResponse);
+ rpc RecoverCarrierTransition(RecoverCarrierTransitionRequest) returns (CarrierTransitionResponse);
+}
+// The receiving Core is Parent; Source and Target are the two carriers.
+// Comparisons belong to Parent. No caller identity, fence or manifest is input.
+message BeginCarrierTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional string source = 2 [(ucupa.network.required_value) = true];
+ optional string target = 3 [(ucupa.network.required_value) = true];
+ optional string mount = 4 [(ucupa.network.required_value) = true];
+ ucupa.network.Token expected_element = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+ ucupa.network.Token expected_mount = 6 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = MOUNT_REVISION];
+ optional string parent_address = 7 [(ucupa.network.required_value) = true];
+ optional string source_address = 8 [(ucupa.network.required_value) = true];
+ optional string target_address = 9 [(ucupa.network.required_value) = true];
+}
+message InspectCarrierTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional string mount = 2 [(ucupa.network.required_value) = true];
+}
+message CancelCarrierTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional string mount = 2 [(ucupa.network.required_value) = true];
+ ucupa.network.Token expected = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CARRIER_REVISION];
+}
+// Parent-owned recovery. The two tokens are the separately issued source and
+// target approvals; neither confers permission by itself and neither is
+// refreshed implicitly. Operation IDs retain their exact bytes across retries.
+message RecoverCarrierTransitionRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes source_token = 2 [(ucupa.network.required_value) = true];
+ bytes target_token = 3 [(ucupa.network.required_value) = true];
+}
+enum CarrierProgress {
+ CARRIER_PROGRESS_UNSPECIFIED = 0;
+ CARRIER_RESERVED = 1; CARRIER_PERMITTED = 2; CARRIER_CANCELLED = 3;
+ CARRIER_COMMITTED = 4; CARRIER_SETTLED = 5;
+}
+message CarrierStatus {
+ optional string parent = 1 [(ucupa.network.required_value) = true];
+ optional string source = 2 [(ucupa.network.required_value) = true];
+ optional string target = 3 [(ucupa.network.required_value) = true];
+ optional bytes operation_id = 4 [(ucupa.network.required_value) = true];
+ optional string mount = 5 [(ucupa.network.required_value) = true];
+ optional CarrierProgress progress = 6 [(ucupa.network.required_value) = true];
+ ucupa.network.Token revision = 7 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CARRIER_REVISION];
+}
+message CarrierTransitionResponse { oneof outcome { CarrierStatus result = 1; ucupa.network.Failure error = 2; } }
+
+// Parent evidence is read from the actual controller over authenticated peer
+// TLS. Neither the public binding nor these service values confer permission.
+message CarrierApprovalBinding {
+ optional string parent = 1 [(ucupa.network.required_value) = true];
+ BeginCarrierTransitionRequest command = 2 [(ucupa.network.required_value) = true];
+}
+service TransitionParentService {
+ rpc ReadCarrierPlan(ReadCarrierPlanRequest) returns (ReadCarrierPlanResponse);
+ rpc ReadCarrierDecision(ReadCarrierDecisionRequest) returns (ReadCarrierDecisionResponse);
+}
+message ReadCarrierPlanRequest { CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message ReadCarrierDecisionRequest { CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message ServiceCarrierReservation {
+ TransitionActor actor = 1 [(ucupa.network.required_value) = true];
+ ServiceRevision expected_element = 2 [(ucupa.network.required_value) = true];
+ ServiceRevision expected_mount = 3 [(ucupa.network.required_value) = true];
+ ServiceMountAdmission previous = 4 [(ucupa.network.required_value) = true];
+ ServiceRevision previous_contact = 5 [(ucupa.network.required_value) = true];
+ SpatialTuple tuple = 6 [(ucupa.network.required_value) = true];
+ ServiceMountKey next_key = 7 [(ucupa.network.required_value) = true];
+ ServiceCoreCut at = 8 [(ucupa.network.required_value) = true];
+}
+message ServiceCarrierRefusal {
+ ServiceCoreCut at = 1 [(ucupa.network.required_value) = true];
+ optional uint64 revision = 2 [(ucupa.network.required_value) = true];
+}
+message CarrierPlan {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceCarrierReservation reservation = 2 [(ucupa.network.required_value) = true];
+ ServiceCoreCut permitted_at = 3;
+ ServiceCoreCut cancelled_at = 4;
+ ServiceCarrierRefusal refusal = 5;
+}
+message ReadCarrierPlanResponse { oneof outcome { CarrierPlan result = 1; ucupa.network.Failure failure = 2; } }
+message CarrierDecision {
+ CarrierPlan plan = 1 [(ucupa.network.required_value) = true];
+ ServiceCoreCut final_cut = 2 [(ucupa.network.required_value) = true];
+ bytes manifest_digest = 3 [(ucupa.network.required_value) = true];
+ optional uint64 fence_revision = 4 [(ucupa.network.required_value) = true];
+ ServiceCoreCut accepted_at = 5 [(ucupa.network.required_value) = true];
+ optional uint64 acceptance_revision = 6 [(ucupa.network.required_value) = true];
+ ServiceCoreCut decided_at = 7 [(ucupa.network.required_value) = true];
+ optional uint64 decision_revision = 8 [(ucupa.network.required_value) = true];
+}
+message ReadCarrierDecisionResponse { oneof outcome { CarrierDecision result = 1; ucupa.network.Failure failure = 2; } }
+message RecoverTransitionRequest {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes approval_token = 2 [(ucupa.network.required_value) = true];
+}
+enum TransitionKind { TRANSITION_KIND_UNSPECIFIED = 0; TRANSITION_SLICE = 1; TRANSITION_ROOT = 2; }
+enum TransitionProgress {
+ TRANSITION_PROGRESS_UNSPECIFIED = 0;
+ TRANSITION_INTENT = 1; TRANSITION_CANCELLED = 2; TRANSITION_FENCED = 3;
+ TRANSITION_COMMITTED = 4; TRANSITION_SETTLED = 5;
+}
+message BeginTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional TransitionKind kind = 2 [(ucupa.network.required_value) = true];
+ optional string target = 3 [(ucupa.network.required_value) = true];
+ optional string boundary = 4 [(ucupa.network.required_value) = true];
+ ucupa.network.Token expected = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+ SpatialTuple final = 6; // Required for slice, absent for root.
+ optional string source_address = 7 [(ucupa.network.required_value) = true];
+ optional string target_address = 8 [(ucupa.network.required_value) = true];
+}
+message InspectTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional string boundary = 2 [(ucupa.network.required_value) = true];
+}
+message CancelTransitionRequest {
+ optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+ optional string boundary = 2 [(ucupa.network.required_value) = true];
+ ucupa.network.Token expected = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = TRANSITION_REVISION];
+}
+message TransitionStatus {
+ optional string source = 1 [(ucupa.network.required_value) = true];
+ optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+ optional TransitionKind kind = 3 [(ucupa.network.required_value) = true];
+ optional string target = 4 [(ucupa.network.required_value) = true];
+ optional string boundary = 5 [(ucupa.network.required_value) = true];
+ optional TransitionProgress progress = 6 [(ucupa.network.required_value) = true];
+ ucupa.network.Token revision = 7 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = TRANSITION_REVISION];
+}
+message TransitionResponse { oneof outcome { TransitionStatus result = 1; ucupa.network.Failure error = 2; } }
+
+// Target-issued, runtime-only approval. The original target caller/view stays
+// inside admission; only the designated authenticated source may check it.
+message TransitionApprovalBinding {
+ optional string source = 1 [(ucupa.network.required_value) = true];
+ BeginTransitionRequest command = 2 [(ucupa.network.required_value) = true];
+}
+message CreateTransitionApprovalRequest {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ optional uint64 ttl_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message TransitionApproval {
+ optional string target = 1 [(ucupa.network.required_value) = true];
+ TransitionApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+ optional bytes token = 3 [(ucupa.network.required_value) = true];
+ optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+}
+message CreateTransitionApprovalResponse { oneof outcome { TransitionApproval result = 1; ucupa.network.Failure failure = 2; } }
+message CheckTransitionApprovalRequest {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ optional bytes token = 2 [(ucupa.network.required_value) = true];
+}
+message TransitionApprovalCheck {
+ optional string target = 1 [(ucupa.network.required_value) = true];
+ TransitionApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+ optional string realm = 3 [(ucupa.network.required_value) = true];
+ optional string principal = 4 [(ucupa.network.required_value) = true];
+}
+message CheckTransitionApprovalResponse { oneof outcome { TransitionApprovalCheck result = 1; ucupa.network.Failure failure = 2; } }
+message RevokeTransitionApprovalRequest { optional bytes token = 1 [(ucupa.network.required_value) = true]; }
+message RevokeTransitionApprovalResponse { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+service TransitionApprovalService {
+ rpc CreateTransitionApproval(CreateTransitionApprovalRequest) returns (CreateTransitionApprovalResponse);
+ rpc CheckTransitionApproval(CheckTransitionApprovalRequest) returns (CheckTransitionApprovalResponse);
+ rpc RevokeTransitionApproval(RevokeTransitionApprovalRequest) returns (RevokeTransitionApprovalResponse);
+}
+
+// Carrier approvals are issued separately by the source carrier's export
+// caller and the target carrier's import caller. The parent is the only
+// designated checker; a check re-validates the retained original caller/view.
+// The source preflight is not a check: it proves one live approval exists.
+message CreateCarrierApprovalRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ optional uint64 ttl_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message CarrierApproval {
+ optional string issuer = 1 [(ucupa.network.required_value) = true];
+ CarrierApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+ optional bytes token = 3 [(ucupa.network.required_value) = true];
+ optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+}
+message CreateCarrierApprovalResponse { oneof outcome { CarrierApproval result = 1; ucupa.network.Failure failure = 2; } }
+message CheckCarrierApprovalRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes token = 2;
+}
+message CarrierApprovalCheck {
+ optional string issuer = 1 [(ucupa.network.required_value) = true];
+ CarrierApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+ optional string realm = 3 [(ucupa.network.required_value) = true];
+ optional string principal = 4 [(ucupa.network.required_value) = true];
+}
+message CheckCarrierApprovalResponse { oneof outcome { CarrierApprovalCheck result = 1; ucupa.network.Failure failure = 2; } }
+message RevokeCarrierApprovalRequest { optional bytes token = 1 [(ucupa.network.required_value) = true]; }
+message RevokeCarrierApprovalResponse { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+service CarrierApprovalService {
+ rpc CreateCarrierApproval(CreateCarrierApprovalRequest) returns (CreateCarrierApprovalResponse);
+ rpc CheckCarrierApproval(CheckCarrierApprovalRequest) returns (CheckCarrierApprovalResponse);
+ rpc RevokeCarrierApproval(RevokeCarrierApprovalRequest) returns (RevokeCarrierApprovalResponse);
+}
+
+// Read-only evidence from the designated source. No request contains a fence,
+// acceptance or decision supplied by the caller. Mutual TLS binds the target.
+service TransitionSourceService {
+ rpc ReadTransitionChunk(ReadTransitionChunkRequest) returns (ReadTransitionChunkResponse);
+ rpc ReadTransitionDecision(ReadTransitionDecisionRequest) returns (ReadTransitionDecisionResponse);
+ rpc FenceCarrierSource(FenceCarrierSourceRequest) returns (FenceCarrierSourceResponse);
+ rpc ReadCarrierSourceChunk(ReadCarrierSourceChunkRequest) returns (ReadCarrierSourceChunkResponse);
+ rpc SettleCarrierSource(SettleCarrierSourceRequest) returns (SettleCarrierSourceResponse);
+}
+message ServiceTransitionFence {
+ TransitionActor actor = 1 [(ucupa.network.required_value) = true];
+ ServiceRevision expected = 2 [(ucupa.network.required_value) = true];
+ ServiceCoreCut final_cut = 3 [(ucupa.network.required_value) = true];
+ optional bytes manifest_digest = 4 [(ucupa.network.required_value) = true];
+}
+// Retained original identity bytes, not credentials or a new caller assertion.
+message TransitionActor {
+ optional bytes realm = 1 [(ucupa.network.required_value) = true];
+ optional bytes principal = 2 [(ucupa.network.required_value) = true];
+}
+message ReadTransitionChunkRequest {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ optional uint64 offset = 2 [(ucupa.network.required_value) = true];
+ optional uint32 max_bytes = 3 [(ucupa.network.required_value) = true];
+}
+message TransitionChunk {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceTransitionFence fence = 2 [(ucupa.network.required_value) = true];
+ optional uint64 total_bytes = 3 [(ucupa.network.required_value) = true];
+ optional uint64 offset = 4 [(ucupa.network.required_value) = true];
+ optional bytes data = 5 [(ucupa.network.required_value) = true];
+}
+message ReadTransitionChunkResponse { oneof outcome { TransitionChunk result = 1; ucupa.network.Failure failure = 2; } }
+message ReadTransitionDecisionRequest { TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message TransitionDecision {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceTransitionFence fence = 2 [(ucupa.network.required_value) = true];
+ ServiceCoreCut accepted_at = 3 [(ucupa.network.required_value) = true];
+ optional uint64 acceptance_revision = 4 [(ucupa.network.required_value) = true];
+ ServiceCoreCut decided_at = 5 [(ucupa.network.required_value) = true];
+ optional uint64 decision_revision = 6 [(ucupa.network.required_value) = true];
+}
+message ReadTransitionDecisionResponse { oneof outcome { TransitionDecision result = 1; ucupa.network.Failure failure = 2; } }
+
+// Carrier source evidence. The approval token is the source carrier's own
+// export approval; the parent never supplies fence or manifest bytes.
+message FenceCarrierSourceRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes approval_token = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceCarrierFence {
+ CarrierPlan permit = 1 [(ucupa.network.required_value) = true];
+ ServiceCoreCut final_cut = 2 [(ucupa.network.required_value) = true];
+ bytes manifest_digest = 3 [(ucupa.network.required_value) = true];
+ optional uint64 revision = 4 [(ucupa.network.required_value) = true];
+}
+message FenceCarrierSourceResponse { oneof outcome { ServiceCarrierFence result = 1; ucupa.network.Failure failure = 2; } }
+message ReadCarrierSourceChunkRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ optional uint64 offset = 2 [(ucupa.network.required_value) = true];
+ optional uint32 max_bytes = 3 [(ucupa.network.required_value) = true];
+}
+message CarrierSourceChunk {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceCarrierFence fence = 2 [(ucupa.network.required_value) = true];
+ optional uint64 total_bytes = 3 [(ucupa.network.required_value) = true];
+ optional uint64 offset = 4 [(ucupa.network.required_value) = true];
+ optional bytes data = 5 [(ucupa.network.required_value) = true];
+}
+message ReadCarrierSourceChunkResponse { oneof outcome { CarrierSourceChunk result = 1; ucupa.network.Failure failure = 2; } }
+message SettleCarrierSourceRequest { CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message SettleCarrierSourceResponse { optional bool settled = 1 [(ucupa.network.required_value) = true]; }
+
+// Only authenticated service peers use these methods. The receiver obtains
+// source evidence itself; a caller cannot submit a fence or decision as proof.
+service TransitionTargetService {
+ rpc AcceptTransition(AcceptTransitionRequest) returns (AcceptTransitionResponse);
+ rpc InstallTransition(InstallTransitionRequest) returns (InstallTransitionResponse);
+ rpc CheckCarrierImport(CheckCarrierImportRequest) returns (CheckCarrierImportResponse);
+ rpc AcceptCarrierTarget(AcceptCarrierTargetRequest) returns (AcceptCarrierTargetResponse);
+ rpc InstallCarrierTarget(InstallCarrierTargetRequest) returns (InstallCarrierTargetResponse);
+ rpc ReadCarrierCompletion(ReadCarrierCompletionRequest) returns (ReadCarrierCompletionResponse);
+}
+message AcceptTransitionRequest {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes approval_token = 2 [(ucupa.network.required_value) = true];
+}
+message TransitionAcceptance {
+ TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceTransitionFence fence = 2 [(ucupa.network.required_value) = true];
+ ServiceCoreCut accepted_at = 3 [(ucupa.network.required_value) = true];
+ optional uint64 acceptance_revision = 4 [(ucupa.network.required_value) = true];
+}
+message AcceptTransitionResponse { oneof outcome { TransitionAcceptance result = 1; ucupa.network.Failure failure = 2; } }
+message InstallTransitionRequest { TransitionApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message TransitionCompletion {
+ TransitionDecision decision = 1 [(ucupa.network.required_value) = true];
+ ServiceCoreCut installed_at = 2 [(ucupa.network.required_value) = true];
+ optional uint64 installation_revision = 3 [(ucupa.network.required_value) = true];
+ ServiceCoreCut completed_at = 4 [(ucupa.network.required_value) = true];
+ optional uint64 completion_revision = 5 [(ucupa.network.required_value) = true];
+}
+message InstallTransitionResponse { oneof outcome { TransitionCompletion result = 1; ucupa.network.Failure failure = 2; } }
+
+// Carrier target admission. CheckCarrierImport serves two authenticated peers:
+// the parent with its import approval token, and the source carrier's stateless
+// preflight, which only proves one live approval exists for the exact binding.
+message CheckCarrierImportRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes token = 2;
+}
+// CarrierImportPreflight is the tokenless source-side answer. It proves one
+// live original import approval exists for the exact binding and discloses no
+// approver identity.
+message CarrierImportPreflight {
+ optional string issuer = 1 [(ucupa.network.required_value) = true];
+ CarrierApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+}
+message CheckCarrierImportResponse { oneof outcome { CarrierApprovalCheck result = 1; ucupa.network.Failure failure = 2; CarrierImportPreflight preflight = 3; } }
+message AcceptCarrierTargetRequest {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ bytes approval_token = 2 [(ucupa.network.required_value) = true];
+}
+message CarrierTargetAcceptance {
+ CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+ ServiceCarrierFence fence = 2 [(ucupa.network.required_value) = true];
+ ServiceCoreCut accepted_at = 3 [(ucupa.network.required_value) = true];
+ optional uint64 acceptance_revision = 4 [(ucupa.network.required_value) = true];
+}
+message AcceptCarrierTargetResponse { oneof outcome { CarrierTargetAcceptance result = 1; ucupa.network.Failure failure = 2; } }
+message InstallCarrierTargetRequest { CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message CarrierCompletion {
+ CarrierDecision decision = 1 [(ucupa.network.required_value) = true];
+ ServiceCoreCut installed_at = 2 [(ucupa.network.required_value) = true];
+ optional uint64 installation_revision = 3 [(ucupa.network.required_value) = true];
+ ServiceCoreCut completed_at = 4 [(ucupa.network.required_value) = true];
+ optional uint64 completion_revision = 5 [(ucupa.network.required_value) = true];
+}
+message InstallCarrierTargetResponse { oneof outcome { CarrierCompletion result = 1; ucupa.network.Failure failure = 2; } }
+message ReadCarrierCompletionRequest { CarrierApprovalBinding binding = 1 [(ucupa.network.required_value) = true]; }
+message ReadCarrierCompletionResponse { oneof outcome { CarrierCompletion result = 1; ucupa.network.Failure failure = 2; } }
+
+enum Intent {
+  INTENT_UNSPECIFIED = 0;
+  READ = 1 [(ucupa.network.literal) = "read"];
+  LIST = 2 [(ucupa.network.literal) = "list"];
+  QUERY = 3 [(ucupa.network.literal) = "query"];
+  CREATE_ANCHOR = 4 [(ucupa.network.literal) = "create-anchor"];
+  CREATE_ENTITY = 5 [(ucupa.network.literal) = "create-entity"];
+  UPDATE_ANCHOR = 6 [(ucupa.network.literal) = "update-anchor"];
+  UPDATE_ENTITY = 7 [(ucupa.network.literal) = "update-entity"];
+  DELETE_ANCHOR = 8 [(ucupa.network.literal) = "delete-anchor"];
+  DELETE_ENTITY = 9 [(ucupa.network.literal) = "delete-entity"];
+}
+enum ElementKind { ELEMENT_UNSPECIFIED = 0; ANCHOR = 1 [(ucupa.network.literal) = "anchor"]; ENTITY = 2 [(ucupa.network.literal) = "entity"]; }
+enum RangeKind { RANGE_UNSPECIFIED = 0; BOUNDED_SPHERE = 1 [(ucupa.network.literal) = "bounded-sphere"]; UNBOUNDED_ROOT = 2 [(ucupa.network.literal) = "unbounded-root"]; }
+enum Selector { SELECTOR_UNSPECIFIED = 0; ANCHORS = 1 [(ucupa.network.literal) = "anchors"]; ENTITIES = 2 [(ucupa.network.literal) = "entities"]; BOTH = 3 [(ucupa.network.literal) = "both"]; }
+enum ReadMode { READ_MODE_UNSPECIFIED = 0; CURRENT_VERIFIED = 1; RETAINED = 2; }
+enum Presence { PRESENCE_UNSPECIFIED = 0; PRESENT = 1; NOT_FOUND = 2; }
+enum Coverage { COVERAGE_UNSPECIFIED = 0; COMPLETE = 1; PARTIAL = 2; }
+enum QueryGap { QUERY_GAP_UNSPECIFIED = 0; UNRESOLVED_COVERAGE = 1; EXACT_WORK_LIMIT = 2; }
+enum AttachmentState { ATTACHMENT_UNSPECIFIED = 0; NONE = 1; ACTIVE = 2; DETACHED = 3; RETIRED = 4; }
+enum CommitStatus { COMMIT_UNSPECIFIED = 0; COMMITTED = 1; UNCHANGED = 2; }
+enum Category { CATEGORY_UNSPECIFIED = 0; SPATIAL = 1 [(ucupa.network.literal) = "spatial"]; CONTENT = 2 [(ucupa.network.literal) = "content"]; ATTACHMENT = 3 [(ucupa.network.literal) = "attachment"]; CONTACT = 4 [(ucupa.network.literal) = "contact"]; TERMINAL = 5 [(ucupa.network.literal) = "terminal"]; }
+
+message Rotation { optional uint32 pivot = 1 [(ucupa.network.required_value) = true]; ucupa.network.Vector3 ratios = 2 [(ucupa.network.required_value) = true]; }
+message Pose { ucupa.network.Vector3 translation = 1 [(ucupa.network.required_value) = true]; Rotation rotation = 2 [(ucupa.network.required_value) = true]; }
+message Range { optional RangeKind kind = 1 [(ucupa.network.required_value) = true]; optional double radius = 2; }
+message SpatialTuple {
+  optional string parent = 1 [(ucupa.network.required_value) = true];
+  Pose pose = 2 [(ucupa.network.required_value) = true];
+  Range range = 3 [(ucupa.network.required_value) = true];
+}
+message Sphere { ucupa.network.Vector3 center = 1 [(ucupa.network.required_value) = true]; optional double radius = 2 [(ucupa.network.required_value) = true]; }
+message Record {
+  optional ElementKind kind = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  Range range = 4 [(ucupa.network.required_value) = true];
+  optional string parent = 5; Pose pose = 6; ucupa.network.Address address = 7;
+}
+message Attachment {
+  optional AttachmentState state = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  ucupa.network.AttachmentKey key = 3; optional string next_hop = 4; ucupa.network.Token contact_revision = 5 [(ucupa.network.token_kind) = CONTACT_REVISION];
+}
+message Match {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional ElementKind kind = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Address address = 4 [(ucupa.network.required_value) = true];
+}
+message ChangeGroup {
+  ucupa.network.Token change_id = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CHANGE_ID];
+  optional string owner = 2 [(ucupa.network.required_value) = true];
+  repeated Category category = 3;
+  ucupa.network.Token basis = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CHANGE_BASIS];
+  optional TransitionTerminal terminal = 5;
+}
+// The one terminal transition evidence a source observation discloses when its
+// old scope provably ended under one unique committed successor decision. It
+// binds no manifest content and grants no access to the successor.
+message TransitionTerminal {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string source = 2 [(ucupa.network.required_value) = true];
+  optional string target = 3 [(ucupa.network.required_value) = true];
+  optional uint64 final_cut = 4 [(ucupa.network.required_value) = true];
+  optional bool settled = 5 [(ucupa.network.required_value) = true];
+  optional string next_hop = 6 [(ucupa.network.required_value) = true];
+}
+
+message EnterRequest { ucupa.network.Reference reference = 1 [(ucupa.network.required_value) = true]; optional Intent intent = 2 [(ucupa.network.required_value) = true]; }
+message CloseRequest { ucupa.network.Token handle = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE]; }
+message ReadElementRequest {
+  ucupa.network.Token handle = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+  ucupa.network.Address address = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token basis = 3 [(ucupa.network.token_kind) = READ_RECEIPT]; optional bool prepare_observe = 4;
+}
+message ListDirectRequest {
+  ucupa.network.Token handle = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+  ucupa.network.Address address = 2 [(ucupa.network.required_value) = true];
+  optional uint32 limit = 3; ucupa.network.Token continuation = 4 [(ucupa.network.token_kind) = QUERY_CONTINUATION]; optional bool prepare_observe = 5;
+}
+message QueryRegionRequest {
+  ucupa.network.Token handle = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+  ucupa.network.Address start = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Address basis = 3 [(ucupa.network.required_value) = true];
+  Sphere sphere = 4 [(ucupa.network.required_value) = true];
+  optional sint64 up_depth = 5; optional Selector selector = 6; optional uint32 limit = 7;
+  ucupa.network.Token continuation = 8 [(ucupa.network.token_kind) = QUERY_CONTINUATION]; optional bool prepare_observe = 9;
+}
+message BeginObserveRequest { ucupa.network.Token preparation = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_PREPARATION]; }
+message PollChangesRequest { ucupa.network.Token cursor = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR]; optional uint32 limit = 2; }
+message ReleaseObserveRequest { oneof context { ucupa.network.Token preparation = 1 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION]; ucupa.network.Token cursor = 2 [(ucupa.network.token_kind) = OBSERVATION_CURSOR]; } }
+
+message CreateAnchorRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message CreateAnchorCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+}
+message CreateEntityRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message CreateEntityCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+}
+message UpdateAnchorRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message UpdateAnchorCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+}
+message UpdateEntityRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message UpdateEntityCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  SpatialTuple final = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+}
+message DeleteAnchorRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message DeleteAnchorCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+}
+message DeleteEntityRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token handle = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+}
+message DeleteEntityCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+}
+message MutationCommand {
+  oneof command {
+    CreateAnchorCommand create_anchor = 1; CreateEntityCommand create_entity = 2;
+    UpdateAnchorCommand update_anchor = 3; UpdateEntityCommand update_entity = 4;
+    DeleteAnchorCommand delete_anchor = 5; DeleteEntityCommand delete_entity = 6;
+  }
+}
+message RecoverOutcomeRequest {
+  ucupa.network.Reference reference = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  MutationCommand request = 3 [(ucupa.network.required_value) = true];
+}
+message EnterResult { ucupa.network.Token handle = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE]; ucupa.network.Boundary boundary = 2 [(ucupa.network.required_value) = true]; }
+message CloseResult { optional bool closed = 1 [(ucupa.network.required_value) = true]; }
+message PublicSourceParent {
+  optional string owner = 1 [(ucupa.network.required_value) = true];
+  optional string anchor = 2 [(ucupa.network.required_value) = true];
+  optional bytes delegation = 3 [(ucupa.network.required_value) = true];
+  optional bytes acceptance = 4 [(ucupa.network.required_value) = true];
+}
+message PublicReadSource {
+  optional string owner = 1 [(ucupa.network.required_value) = true];
+  optional string boundary = 2 [(ucupa.network.required_value) = true];
+  ServicePrincipal principal = 3 [(ucupa.network.required_value) = true];
+  optional bytes cut = 4 [(ucupa.network.required_value) = true];
+  optional bytes authorization = 5 [(ucupa.network.required_value) = true];
+  optional ReadMode read_mode = 6 [(ucupa.network.required_value) = true];
+  PublicSourceParent parent = 7;
+  optional string query_scope = 8;
+  optional bytes coverage = 9;
+  repeated ParentAdjacencyEvidence parents = 10;
+}
+message ParentAdjacencyEvidence {
+  optional string parent = 1 [(ucupa.network.required_value) = true];
+  optional bytes adjacency = 2 [(ucupa.network.required_value) = true];
+}
+message PublicSourceGraph {
+  optional bytes purpose = 1 [(ucupa.network.required_value) = true];
+  optional string operation = 2 [(ucupa.network.required_value) = true];
+  repeated PublicReadSource sources = 3;
+}
+message ReadElementResult {
+  ucupa.network.Token receipt = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional ReadMode read_mode = 2 [(ucupa.network.required_value) = true];
+  optional Presence state = 3 [(ucupa.network.required_value) = true];
+  Record record = 4; Attachment attachment = 5; ucupa.network.Token preparation = 6 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+  optional bytes closure = 7;
+  PublicSourceGraph source_graph = 8;
+}
+message ListDirectResult {
+  ucupa.network.Token receipt = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional ReadMode read_mode = 2 [(ucupa.network.required_value) = true];
+  repeated Record records = 3;
+  optional Coverage status = 4 [(ucupa.network.required_value) = true];
+  ucupa.network.Token continuation = 5 [(ucupa.network.token_kind) = QUERY_CONTINUATION]; ucupa.network.Token preparation = 6 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+  optional bytes closure = 7;
+  PublicSourceGraph source_graph = 8;
+}
+message QueryRegionResult {
+  ucupa.network.Token receipt = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional ReadMode read_mode = 2 [(ucupa.network.required_value) = true];
+  repeated Match matches = 3;
+  optional string scope = 4 [(ucupa.network.required_value) = true];
+  optional uint64 actual_up_depth = 5 [(ucupa.network.required_value) = true];
+  optional Coverage status = 6 [(ucupa.network.required_value) = true];
+  optional QueryGap gap = 7; ucupa.network.Token continuation = 8 [(ucupa.network.token_kind) = QUERY_CONTINUATION]; ucupa.network.Token preparation = 9 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+  optional bytes closure = 10;
+  PublicSourceGraph source_graph = 11;
+}
+message MutationResult {
+  optional CommitStatus status = 1 [(ucupa.network.required_value) = true];
+  oneof outcome { Record record = 2; ucupa.network.Token tombstone_revision = 3 [(ucupa.network.token_kind) = RECORD_REVISION]; }
+}
+message BeginObserveResult { ucupa.network.Token cursor = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR]; }
+message PollChangesResult { repeated ChangeGroup groups = 1; ucupa.network.Token next_cursor = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR]; }
+message ReleaseObserveResult { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+
+message EnterResponse { oneof outcome { EnterResult result = 1; ucupa.network.Failure failure = 2; } }
+message CloseResponse { oneof outcome { CloseResult result = 1; ucupa.network.Failure failure = 2; } }
+message ReadElementResponse { oneof outcome { ReadElementResult result = 1; ucupa.network.Failure failure = 2; } }
+message ListDirectResponse { oneof outcome { ListDirectResult result = 1; ucupa.network.Failure failure = 2; } }
+message QueryRegionResponse { oneof outcome { QueryRegionResult result = 1; ucupa.network.Failure failure = 2; } }
+message BeginObserveResponse { oneof outcome { BeginObserveResult result = 1; ucupa.network.Failure failure = 2; } }
+message PollChangesResponse { oneof outcome { PollChangesResult result = 1; ucupa.network.Failure failure = 2; } }
+message ReleaseObserveResponse { oneof outcome { ReleaseObserveResult result = 1; ucupa.network.Failure failure = 2; } }
+message CreateAnchorResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message CreateEntityResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message UpdateAnchorResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message UpdateEntityResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message DeleteAnchorResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message DeleteEntityResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message RecoverOutcomeResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+
+service CoreService {
+  rpc Enter(EnterRequest) returns (EnterResponse);
+  rpc Close(CloseRequest) returns (CloseResponse);
+  rpc ReadElement(ReadElementRequest) returns (ReadElementResponse);
+  rpc ListDirect(ListDirectRequest) returns (ListDirectResponse);
+  rpc QueryRegion(QueryRegionRequest) returns (QueryRegionResponse);
+  rpc BeginObserve(BeginObserveRequest) returns (BeginObserveResponse);
+  rpc PollChanges(PollChangesRequest) returns (PollChangesResponse);
+  rpc ReleaseObserve(ReleaseObserveRequest) returns (ReleaseObserveResponse);
+  rpc CreateAnchor(CreateAnchorRequest) returns (CreateAnchorResponse);
+  rpc CreateEntity(CreateEntityRequest) returns (CreateEntityResponse);
+  rpc UpdateAnchor(UpdateAnchorRequest) returns (UpdateAnchorResponse);
+  rpc UpdateEntity(UpdateEntityRequest) returns (UpdateEntityResponse);
+  rpc DeleteAnchor(DeleteAnchorRequest) returns (DeleteAnchorResponse);
+  rpc DeleteEntity(DeleteEntityRequest) returns (DeleteEntityResponse);
+  rpc RecoverOutcome(RecoverOutcomeRequest) returns (RecoverOutcomeResponse);
+}
+
+// Fixed-service attachment evidence. Never returned by consumer CoreService reads.
+message ServiceRevision {
+  optional bytes incarnation = 1 [(ucupa.network.required_value) = true];
+  optional uint64 sequence = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceCoreCut {
+  optional bytes incarnation = 1 [(ucupa.network.required_value) = true];
+  optional uint64 sequence = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceAttachmentKey {
+  optional string core = 1 [(ucupa.network.required_value) = true];
+  optional string facet = 2 [(ucupa.network.required_value) = true];
+  optional string element = 3 [(ucupa.network.required_value) = true];
+  ServiceRevision proposal = 4 [(ucupa.network.required_value) = true];
+}
+message ReadControlRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bool prepare = 2 [(ucupa.network.required_value) = true];
+}
+message CheckControlRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token preparation = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+}
+message ControlRead {
+  optional string core = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  optional Presence presence = 3 [(ucupa.network.required_value) = true];
+  ServiceCoreCut cut = 4 [(ucupa.network.required_value) = true];
+  optional AttachmentState state = 5;
+  ServiceRevision revision = 6;
+  ServiceAttachmentKey active = 7;
+  ucupa.network.Token proposal = 8 [(ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  ucupa.network.Token preparation = 9 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+  ServiceAttachmentKey pending = 10;
+}
+message ReadControlResponse { oneof outcome { ControlRead result = 1; ucupa.network.Failure failure = 2; } }
+message CheckControlResult { optional bool valid = 1 [(ucupa.network.required_value) = true]; }
+message CheckControlResponse { oneof outcome { CheckControlResult result = 1; ucupa.network.Failure failure = 2; } }
+service AttachmentControlService {
+  rpc ReadControl(ReadControlRequest) returns (ReadControlResponse);
+  rpc ReadProposalControl(ReadControlRequest) returns (ReadControlResponse);
+  rpc CheckControl(CheckControlRequest) returns (CheckControlResponse);
+  rpc ResolveProposalControl(ResolveProposalControlRequest) returns (ReadControlResponse);
+  rpc ReadReplacementControl(ReadReplacementControlRequest) returns (ReadReplacementControlResponse);
+  rpc ReadSuccessorControl(ReadSuccessorControlRequest) returns (ReadSuccessorControlResponse);
+}
+message ResolveProposalControlRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token proposal = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = ATTACHMENT_REVISION];
+}
+// The fixed Facet service's trusted read of exactly one named replacement
+// control record it is a party to. It never authorizes a public caller.
+message ReadReplacementControlRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+}
+message ReplacementControlRecord {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string source = 3 [(ucupa.network.required_value) = true];
+  optional string target = 4 [(ucupa.network.required_value) = true];
+  ServiceRevision proposal = 5 [(ucupa.network.required_value) = true];
+  optional uint64 final_cut = 6;
+  optional bytes manifest_digest = 7;
+  optional bool permitted = 8 [(ucupa.network.required_value) = true];
+  optional bool fenced = 9 [(ucupa.network.required_value) = true];
+  optional bool accepted = 10 [(ucupa.network.required_value) = true];
+  optional bool committed = 11 [(ucupa.network.required_value) = true];
+  optional bool settled = 12 [(ucupa.network.required_value) = true];
+  optional bool cancelled = 13 [(ucupa.network.required_value) = true];
+}
+message ReadReplacementControlResponse { oneof outcome { ReplacementControlRecord result = 1; ucupa.network.Failure failure = 2; } }
+// The fixed Facet service's trusted read of one previous Core's durable
+// successor statement for a departed element. It never authorizes a public
+// caller and discloses no manifest content.
+message ReadSuccessorControlRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+}
+message SuccessorControlRecord {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bool found = 2 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 3;
+  optional string source = 4;
+  optional string target = 5;
+  optional uint64 final_cut = 6;
+  optional bool settled = 7 [(ucupa.network.required_value) = true];
+}
+message ReadSuccessorControlResponse { oneof outcome { SuccessorControlRecord result = 1; ucupa.network.Failure failure = 2; } }
+
+// Target-issued read-only authority, separate from the user's ordinary session.
+// The actor must prove possession of its configured TLS client key on every connection.
+message CreateReadDelegationRequest {
+  ucupa.network.Reference reference = 1 [(ucupa.network.required_value) = true];
+  optional string actor = 2 [(ucupa.network.required_value) = true];
+  repeated Intent intents = 3;
+  optional bool observe = 4 [(ucupa.network.required_value) = true];
+  optional uint64 ttl_seconds = 5 [(ucupa.network.required_value) = true];
+}
+message ReadDelegation {
+  optional string target = 1 [(ucupa.network.required_value) = true];
+  optional string actor = 2 [(ucupa.network.required_value) = true];
+  optional bytes token = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token handle = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = SPACE_HANDLE];
+  optional uint64 expires_in_seconds = 5 [(ucupa.network.required_value) = true];
+}
+message CreateReadDelegationResponse {
+  oneof outcome { ReadDelegation result = 1; ucupa.network.Failure failure = 2; }
+}
+message RevokeReadDelegationRequest { optional bytes token = 1 [(ucupa.network.required_value) = true]; }
+message RevokeReadDelegationResponse { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+service ReadDelegationService {
+  rpc CreateReadDelegation(CreateReadDelegationRequest) returns (CreateReadDelegationResponse);
+  rpc RevokeReadDelegation(RevokeReadDelegationRequest) returns (RevokeReadDelegationResponse);
+  rpc BeginIdentityChallenge(CreateReadDelegationRequest) returns (IdentityChallenge);
+  rpc ExchangeIdentity(ExchangeIdentityRequest) returns (CreateReadDelegationResponse);
+}
+message IdentityChallenge {
+  optional bytes challenge = 1 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message ExchangeIdentityRequest {
+  optional string actor = 1 [(ucupa.network.required_value) = true];
+  optional bytes challenge = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.IdentityProof proof = 3 [(ucupa.network.required_value) = true];
+}
+
+// Exact command commitment, not a scope-wide write delegation. The target is
+// the authenticated service; actor is the sole permitted forwarding Core.
+message MountApprovalBinding {
+  optional string actor = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 3 [(ucupa.network.required_value) = true];
+  optional bytes command_digest = 4 [(ucupa.network.required_value) = true];
+}
+message CreateMountApprovalRequest {
+  MountApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+  optional uint64 ttl_seconds = 2 [(ucupa.network.required_value) = true];
+}
+message MountApproval {
+  optional string target = 1 [(ucupa.network.required_value) = true];
+  MountApprovalBinding binding = 2 [(ucupa.network.required_value) = true];
+  optional bytes token = 3 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+}
+message CreateMountApprovalResponse { oneof outcome { MountApproval result = 1; ucupa.network.Failure failure = 2; } }
+message CheckMountApprovalRequest {
+  MountApprovalBinding binding = 1 [(ucupa.network.required_value) = true];
+  optional bytes token = 2 [(ucupa.network.required_value) = true];
+}
+message MountApprovalCheck {
+  optional string target = 1 [(ucupa.network.required_value) = true];
+  optional string realm = 2 [(ucupa.network.required_value) = true];
+  optional string principal = 3 [(ucupa.network.required_value) = true];
+}
+message CheckMountApprovalResponse { oneof outcome { MountApprovalCheck result = 1; ucupa.network.Failure failure = 2; } }
+message RevokeMountApprovalRequest { optional bytes token = 1 [(ucupa.network.required_value) = true]; }
+message RevokeMountApprovalResponse { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+service MountApprovalService {
+  rpc CreateMountApproval(CreateMountApprovalRequest) returns (CreateMountApprovalResponse);
+  rpc CheckMountApproval(CheckMountApprovalRequest) returns (CheckMountApprovalResponse);
+  rpc RevokeMountApproval(RevokeMountApprovalRequest) returns (RevokeMountApprovalResponse);
+}
+
+// Peer evidence is never a public query token. Only mutually authenticated
+// service calls may carry these messages; actor fields are attribution, not
+// authentication. Sequence numbers retain their complete uint64 precision.
+enum MountCommandKind { MOUNT_COMMAND_UNSPECIFIED = 0; MOUNT_ESTABLISH = 1; MOUNT_UPDATE = 2; MOUNT_REVOKE = 3; }
+enum MountDecisionKind { MOUNT_DECISION_UNSPECIFIED = 0; MOUNT_PENDING = 1; MOUNT_COMMITTED = 2; MOUNT_ABORTED = 3; }
+enum MountRejection { MOUNT_REJECTION_UNSPECIFIED = 0; MOUNT_NO_REJECTION = 1; MOUNT_DENIED = 2; MOUNT_NOT_FOUND = 3; MOUNT_CONFLICT = 4; MOUNT_REVISION_CONFLICT = 5; }
+message ServicePrincipal {
+  optional string realm = 1 [(ucupa.network.required_value) = true];
+  optional string principal = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceMountKey {
+  optional string parent_core = 1 [(ucupa.network.required_value) = true];
+  optional string carrier_core = 2 [(ucupa.network.required_value) = true];
+  optional string element = 3 [(ucupa.network.required_value) = true];
+  ServiceRevision proposal = 4 [(ucupa.network.required_value) = true];
+}
+message ServiceMountAdmission {
+  ServiceMountKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceMountCommand {
+  optional MountCommandKind kind = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ServiceRevision expected_element = 3;
+  ServiceRevision expected_mount = 4;
+  optional string carrier_core = 5;
+  optional string carrier_next_hop = 6;
+  optional string parent_next_hop = 7;
+  SpatialTuple final = 8;
+}
+message ServiceMountPrepare {
+  ServiceMountKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  ServiceMountCommand command = 3 [(ucupa.network.required_value) = true];
+  ServicePrincipal parent_actor = 4 [(ucupa.network.required_value) = true];
+  // Required for establish/update, absent when revoke needs no new B caller.
+  ServicePrincipal carrier_actor = 5;
+  ServiceMountAdmission previous = 6;
+  ServiceRevision reserved = 7 [(ucupa.network.required_value) = true];
+  SpatialTuple tuple = 8 [(ucupa.network.required_value) = true];
+}
+message ServiceMountPrepared {
+  ServiceMountPrepare request = 1 [(ucupa.network.required_value) = true];
+  optional bool prepared = 2 [(ucupa.network.required_value) = true];
+  optional MountRejection rejection = 3 [(ucupa.network.required_value) = true];
+  ServiceCoreCut cut = 4 [(ucupa.network.required_value) = true];
+}
+message ServiceMountDecision {
+  ServiceMountPrepare request = 1 [(ucupa.network.required_value) = true];
+  optional MountDecisionKind decision = 2 [(ucupa.network.required_value) = true];
+  ServiceCoreCut cut = 3;
+  optional MountRejection rejection = 4 [(ucupa.network.required_value) = true];
+  ServiceMountAdmission admission = 5;
+}
+message ServiceMountClosed {
+  ServiceMountDecision evidence = 1 [(ucupa.network.required_value) = true];
+  ServiceCoreCut cut = 2 [(ucupa.network.required_value) = true];
+}
+message PrepareMountRequest {
+  ServiceMountPrepare request = 1 [(ucupa.network.required_value) = true];
+  CheckMountApprovalRequest approval = 2 [(ucupa.network.required_value) = true];
+}
+message PrepareMountResponse { oneof outcome { ServiceMountPrepared result = 1; ucupa.network.Failure failure = 2; } }
+message FinishMountRequest { ServiceMountDecision evidence = 1 [(ucupa.network.required_value) = true]; }
+message FinishMountResponse { oneof outcome { ServiceMountClosed result = 1; ucupa.network.Failure failure = 2; } }
+message ReadMountDecisionRequest {
+  optional string parent_core = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string actor = 3 [(ucupa.network.required_value) = true];
+}
+message ReadMountDecisionResponse { oneof outcome { ServiceMountDecision result = 1; ucupa.network.Failure failure = 2; } }
+service MountPeerService {
+  rpc PrepareMount(PrepareMountRequest) returns (PrepareMountResponse);
+  rpc FinishMount(FinishMountRequest) returns (FinishMountResponse);
+  rpc ReadMountDecision(ReadMountDecisionRequest) returns (ReadMountDecisionResponse);
+}
+
+// Ordinary callers use opaque comparisons, never the peer evidence above.
+message PublicMountCommand {
+  optional MountCommandKind kind = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected_element = 3 [(ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token expected_mount = 4 [(ucupa.network.token_kind) = MOUNT_REVISION];
+  optional string carrier_core = 5;
+  optional string carrier_next_hop = 6;
+  optional string parent_next_hop = 7;
+  SpatialTuple final = 8;
+}
+message InspectMountRequest { optional string element = 1 [(ucupa.network.required_value) = true]; }
+message PublicMountInspection {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token element_revision = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token mount_revision = 3 [(ucupa.network.token_kind) = MOUNT_REVISION];
+  optional uint32 state = 4 [(ucupa.network.required_value) = true];
+  optional string carrier_core = 5;
+  optional string next_hop = 6;
+}
+message InspectMountResponse { oneof outcome { PublicMountInspection result = 1; ucupa.network.Failure failure = 2; } }
+message DescribeMountRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  PublicMountCommand command = 2 [(ucupa.network.required_value) = true];
+}
+message MountApprovalDescription {
+  optional bool required = 1 [(ucupa.network.required_value) = true];
+  optional string target = 2;
+  MountApprovalBinding binding = 3;
+}
+message DescribeMountResponse { oneof outcome { MountApprovalDescription result = 1; ucupa.network.Failure failure = 2; } }
+message ApplyMountRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  PublicMountCommand command = 2 [(ucupa.network.required_value) = true];
+  MountApproval approval = 3;
+}
+message PublicMountOutcome {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  optional MountDecisionKind decision = 3 [(ucupa.network.required_value) = true];
+  optional bool settled = 4 [(ucupa.network.required_value) = true];
+  optional bool changed = 5 [(ucupa.network.required_value) = true];
+  optional MountRejection rejection = 6 [(ucupa.network.required_value) = true];
+  optional uint32 blocked_by = 7 [(ucupa.network.required_value) = true];
+}
+message ApplyMountResponse { oneof outcome { PublicMountOutcome result = 1; ucupa.network.Failure failure = 2; } }
+service MountControlService {
+  rpc InspectMount(InspectMountRequest) returns (InspectMountResponse);
+  rpc DescribeMount(DescribeMountRequest) returns (DescribeMountResponse);
+  rpc ApplyMount(ApplyMountRequest) returns (ApplyMountResponse);
+}
+
+message InspectMountContactRequest {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bool incoming = 2 [(ucupa.network.required_value) = true];
+}
+message PublicMountContact {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bool incoming = 2 [(ucupa.network.required_value) = true];
+  optional string peer_core = 3 [(ucupa.network.required_value) = true];
+  optional string next_hop = 4 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CONTACT_REVISION];
+}
+message InspectMountContactResponse { oneof outcome { PublicMountContact result = 1; ucupa.network.Failure failure = 2; } }
+message RepairMountContactRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  optional bool incoming = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CONTACT_REVISION];
+  optional string next_hop = 5 [(ucupa.network.required_value) = true];
+}
+message RepairMountContactResponse { oneof outcome { PublicMountContact result = 1; ucupa.network.Failure failure = 2; } }
+service MountContactService {
+  rpc InspectMountContact(InspectMountContactRequest) returns (InspectMountContactResponse);
+  rpc RepairMountContact(RepairMountContactRequest) returns (RepairMountContactResponse);
+}
+
+// Original user relationship controls. These are not fixed-service evidence
+// ports; all comparisons are Core-issued public opaque tokens.
+message PublicFacetCommand {
+  optional string kind = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 3 [(ucupa.network.required_value) = true];
+  optional string target = 4;
+  optional string next_hop = 5;
+}
+message PublicFacetInspection {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional AttachmentState state = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  optional string target = 4;
+  ucupa.network.Token proposal = 5 [(ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  optional string pending_target = 6;
+  ucupa.network.Token pending_proposal = 7 [(ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  optional string next_hop = 8;
+  ucupa.network.Token contact_revision = 9 [(ucupa.network.token_kind) = CONTACT_REVISION];
+  // Current key owner for ACTIVE, original key owner for DETACHED; no access grant.
+  optional string key_core = 10;
+}
+message InspectFacetRequest { optional string element = 1 [(ucupa.network.required_value) = true]; }
+message InspectFacetResponse { oneof outcome { PublicFacetInspection result = 1; ucupa.network.Failure failure = 2; } }
+message ApplyFacetRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  PublicFacetCommand command = 2 [(ucupa.network.required_value) = true];
+}
+message PublicFacetOutcome {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional uint32 status = 2 [(ucupa.network.required_value) = true];
+  PublicFacetInspection state = 3 [(ucupa.network.required_value) = true];
+}
+message ApplyFacetResponse { oneof outcome { PublicFacetOutcome result = 1; ucupa.network.Failure failure = 2; } }
+service FacetControlService {
+  rpc InspectFacet(InspectFacetRequest) returns (InspectFacetResponse);
+  rpc ApplyFacet(ApplyFacetRequest) returns (ApplyFacetResponse);
+  rpc BeginFacetReplacement(BeginFacetReplacementRequest) returns (FacetReplacementStatusResponse);
+  rpc RecoverFacetReplacement(ReplacementControlRequest) returns (FacetReplacementStatusResponse);
+  rpc InspectFacetReplacement(ReplacementControlRequest) returns (FacetReplacementStatusResponse);
+  rpc CancelFacetReplacement(CancelFacetReplacementRequest) returns (FacetReplacementStatusResponse);
+}
+// Caller-visible comparisons only; the current content owner is disclosed from
+// the retained record, never chosen by the caller.
+message PublicFacetReplacementCommand {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = ATTACHMENT_REVISION];
+  optional string target = 3 [(ucupa.network.required_value) = true];
+  optional string target_address = 4 [(ucupa.network.required_value) = true];
+  optional string source_address = 5 [(ucupa.network.required_value) = true];
+}
+message BeginFacetReplacementRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  PublicFacetReplacementCommand command = 2 [(ucupa.network.required_value) = true];
+}
+message ReplacementControlRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+}
+message CancelFacetReplacementRequest {
+  optional bytes operation_id = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = FACET_REPLACEMENT_REVISION];
+}
+// The separately authorized control projection: milestones and the stable
+// public revision comparison, never manifest bytes or private cuts.
+message FacetReplacementStatus {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string source = 3 [(ucupa.network.required_value) = true];
+  optional string target = 4 [(ucupa.network.required_value) = true];
+  optional uint32 progress = 5 [(ucupa.network.required_value) = true];
+  optional bool refused = 6 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 7 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = FACET_REPLACEMENT_REVISION];
+}
+message FacetReplacementStatusResponse { oneof outcome { FacetReplacementStatus result = 1; ucupa.network.Failure failure = 2; } }
+
+// Owner-local immutable read portions. These are private authenticated service
+// exchanges, never a public grant to enumerate raw owner storage. A finite
+// identity challenge binds the original caller to precisely one read request.
+message FederationReadRequest {
+  optional string boundary = 1 [(ucupa.network.required_value) = true];
+  ServiceMountKey incoming = 2;
+  optional Intent intent = 3 [(ucupa.network.required_value) = true];
+  optional bool prepare_observe = 4 [(ucupa.network.required_value) = true];
+  optional ReadMode mode = 5;
+  optional bytes purpose = 6 [(ucupa.network.required_value) = true];
+}
+message FederationMountRelation {
+  optional bool incoming = 1 [(ucupa.network.required_value) = true];
+  optional uint32 state = 2 [(ucupa.network.required_value) = true];
+  ServiceMountKey key = 3 [(ucupa.network.required_value) = true];
+  ServiceMountAdmission admission = 4 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 5 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = MOUNT_REVISION];
+  ucupa.network.Token contact = 6 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CONTACT_REVISION];
+  optional string next_hop = 7 [(ucupa.network.required_value) = true];
+  Range range = 8 [(ucupa.network.required_value) = true];
+  optional bool write_gate_open = 9 [(ucupa.network.required_value) = true];
+}
+message FederationReadPart {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional string boundary = 2 [(ucupa.network.required_value) = true];
+  optional bytes purpose = 3 [(ucupa.network.required_value) = true];
+  optional ReadMode read_mode = 4 [(ucupa.network.required_value) = true];
+  FederationMountRelation incoming = 5;
+  ucupa.network.Token preparation = 6 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+  ServicePrincipal subject = 7 [(ucupa.network.required_value) = true];
+  optional bytes cut_stamp = 8 [(ucupa.network.required_value) = true];
+  optional bytes authorization_stamp = 9 [(ucupa.network.required_value) = true];
+  optional bool hidden = 10 [(ucupa.network.required_value) = true];
+}
+message FederationRecord {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional ElementKind kind = 2 [(ucupa.network.required_value) = true];
+  optional string parent = 3;
+  Pose pose = 4;
+  Range range = 5 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 6 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.ElementPath path = 7 [(ucupa.network.required_value) = true];
+  PublicFacetInspection attachment = 8;
+  FederationMountRelation mount = 9;
+}
+message FederationPoseStep {
+  Pose pose = 1 [(ucupa.network.required_value) = true];
+  optional bool inverse = 2 [(ucupa.network.required_value) = true];
+}
+message FederationPathRequest {
+  optional string origin = 1 [(ucupa.network.required_value) = true];
+  optional uint64 up = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.ElementPath down = 3 [(ucupa.network.required_value) = true];
+}
+message FederationQueryRequest {
+  optional string scope = 1 [(ucupa.network.required_value) = true];
+  Sphere sphere = 2 [(ucupa.network.required_value) = true];
+  optional Selector selector = 3 [(ucupa.network.required_value) = true];
+  repeated FederationPoseStep to_basis = 4;
+}
+message FederationProjectionRequest {
+  optional string kind = 1 [(ucupa.network.required_value) = true];
+  FederationPathRequest path = 2;
+  optional string element = 3;
+  FederationQueryRequest query = 4;
+}
+message FederationSpineNode {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional string parent = 2;
+  Pose pose = 3;
+}
+message FederationFrontier {
+  FederationMountRelation relation = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.ElementPath path = 2 [(ucupa.network.required_value) = true];
+  repeated FederationPoseStep to_scope = 3;
+}
+message FederationPathResult {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional ElementKind kind = 2 [(ucupa.network.required_value) = true];
+  optional uint64 actual_up = 3 [(ucupa.network.required_value) = true];
+  optional uint64 remaining_up = 4 [(ucupa.network.required_value) = true];
+  ucupa.network.ElementPath remaining_down = 5 [(ucupa.network.required_value) = true];
+  repeated FederationSpineNode spine = 6;
+  FederationFrontier frontier = 7;
+}
+message FederationMatch {
+  optional string element = 1 [(ucupa.network.required_value) = true];
+  optional ElementKind kind = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.ElementPath path = 4 [(ucupa.network.required_value) = true];
+}
+message FederationProjectionPage {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional bytes purpose = 2 [(ucupa.network.required_value) = true];
+  repeated FederationRecord records = 3;
+  optional bool complete = 4 [(ucupa.network.required_value) = true];
+  ucupa.network.Token continuation = 5 [(ucupa.network.token_kind) = QUERY_CONTINUATION];
+  repeated FederationMatch matches = 6;
+  repeated FederationFrontier frontiers = 7;
+  FederationPathResult path = 8;
+  optional uint32 gap = 9 [(ucupa.network.required_value) = true];
+  optional bytes coverage = 10;
+  repeated ParentAdjacencyEvidence parents = 11;
+}
+message BeginFederationReadChallengeRequest {
+  optional string actor = 1 [(ucupa.network.required_value) = true];
+  optional uint64 ttl_seconds = 2 [(ucupa.network.required_value) = true];
+  optional string next_hop = 3 [(ucupa.network.required_value) = true];
+  FederationReadRequest request = 4 [(ucupa.network.required_value) = true];
+}
+message FederationReadGrant {
+  optional string target = 1 [(ucupa.network.required_value) = true];
+  optional string actor = 2 [(ucupa.network.required_value) = true];
+  optional bytes token = 3 [(ucupa.network.required_value) = true];
+  optional uint64 expires_in_seconds = 4 [(ucupa.network.required_value) = true];
+  FederationReadPart part = 5 [(ucupa.network.required_value) = true];
+}
+message ExchangeFederationReadIdentityResponse { oneof outcome { FederationReadGrant result = 1; ucupa.network.Failure failure = 2; } }
+message ProjectFederationReadPartRequest {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  ucupa.network.Token continuation = 2 [(ucupa.network.token_kind) = QUERY_CONTINUATION];
+  optional uint32 limit = 3 [(ucupa.network.required_value) = true];
+  FederationProjectionRequest request = 4 [(ucupa.network.required_value) = true];
+  optional bytes read_challenge = 5;
+  ucupa.network.IdentityProof read_proof = 6;
+}
+message BeginFederationReadAtChallengeRequest {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  optional uint64 ttl_seconds = 3 [(ucupa.network.required_value) = true];
+}
+message ProjectFederationReadPartResponse { oneof outcome { FederationProjectionPage result = 1; ucupa.network.Failure failure = 2; } }
+message FederationReadPartRequest { ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT]; }
+message CheckFederationReadPartRequest {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional bool require_current = 2 [(ucupa.network.required_value) = true];
+}
+message FederationReadPartCheck { optional bool valid = 1 [(ucupa.network.required_value) = true]; }
+message CheckFederationReadPartResponse { oneof outcome { FederationReadPartCheck result = 1; ucupa.network.Failure failure = 2; } }
+message FederationReadPartRelease { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+message ReleaseFederationReadPartResponse { oneof outcome { FederationReadPartRelease result = 1; ucupa.network.Failure failure = 2; } }
+message ObserveFederationReadPartRequest {
+  ucupa.network.Token basis = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional string operation = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token cursor = 3 [(ucupa.network.token_kind) = OBSERVATION_CURSOR];
+  optional uint32 limit = 4;
+}
+message FederationObservationPage {
+  ucupa.network.Token cursor = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR];
+  repeated ChangeGroup groups = 2;
+}
+message ObserveFederationReadPartResponse { oneof outcome { FederationObservationPage result = 1; ucupa.network.Failure failure = 2; } }
+service FederationReadService {
+  rpc ObserveFederationReadPart(ObserveFederationReadPartRequest) returns (ObserveFederationReadPartResponse);
+  rpc BeginFederationReadChallenge(BeginFederationReadChallengeRequest) returns (IdentityChallenge);
+  rpc ExchangeFederationReadIdentity(ExchangeIdentityRequest) returns (ExchangeFederationReadIdentityResponse);
+  rpc BeginFederationReadAtChallenge(BeginFederationReadAtChallengeRequest) returns (IdentityChallenge);
+  rpc ProjectFederationReadPart(ProjectFederationReadPartRequest) returns (ProjectFederationReadPartResponse);
+  rpc CheckFederationReadPart(CheckFederationReadPartRequest) returns (CheckFederationReadPartResponse);
+  rpc ReleaseFederationReadPart(FederationReadPartRequest) returns (ReleaseFederationReadPartResponse);
+}

@@ -1,0 +1,591 @@
+[
+  {
+    "name": "write-only-enter",
+    "schema": "request",
+    "value": {
+      "op": "enter",
+      "reference": {
+        "boundary": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "anchor": "00000000-0000-4000-8000-000000000002"
+        },
+        "nextHop": "local:core"
+      },
+      "intent": "create-entity"
+    },
+    "valid": true
+  },
+  {
+    "name": "read",
+    "schema": "request",
+    "value": {
+      "op": "read",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "address": {
+        "down": []
+      },
+      "prepareObserve": true
+    },
+    "valid": true
+  },
+  {
+    "name": "list",
+    "schema": "request",
+    "value": {
+      "op": "list",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "address": {
+        "down": []
+      },
+      "limit": 1
+    },
+    "valid": true
+  },
+  {
+    "name": "upward-query",
+    "schema": "request",
+    "value": {
+      "op": "query",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "start": {
+        "down": []
+      },
+      "basis": {
+        "down": []
+      },
+      "upDepth": "-1",
+      "sphere": {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "radius": 5
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "create-anchor",
+    "schema": "request",
+    "value": {
+      "op": "create-anchor",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "final": {
+        "parent": "00000000-0000-4000-8000-000000000002",
+        "pose": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": {
+            "pivot": 4,
+            "ratios": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "range": {
+          "kind": "bounded-sphere",
+          "radius": 2
+        }
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "update-anchor",
+    "schema": "request",
+    "value": {
+      "op": "update-anchor",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "final": {
+        "parent": "00000000-0000-4000-8000-000000000002",
+        "pose": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": {
+            "pivot": 4,
+            "ratios": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "range": {
+          "kind": "bounded-sphere",
+          "radius": 2
+        }
+      },
+      "expected": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "delete-anchor",
+    "schema": "request",
+    "value": {
+      "op": "delete-anchor",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "expected": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "recover-anchor",
+    "schema": "request",
+    "value": {
+      "op": "recover-outcome",
+      "reference": {
+        "boundary": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "anchor": "00000000-0000-4000-8000-000000000002"
+        },
+        "nextHop": "local:core"
+      },
+      "operationId": "b3A",
+      "request": {
+        "op": "create-anchor",
+        "element": "00000000-0000-4000-8000-000000000002",
+        "final": {
+          "parent": "00000000-0000-4000-8000-000000000002",
+          "pose": {
+            "translation": [
+              0,
+              0,
+              0
+            ],
+            "rotation": {
+              "pivot": 4,
+              "ratios": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "range": {
+            "kind": "bounded-sphere",
+            "radius": 2
+          }
+        },
+        "operationId": "b3A"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "create-entity",
+    "schema": "request",
+    "value": {
+      "op": "create-entity",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "final": {
+        "parent": "00000000-0000-4000-8000-000000000002",
+        "pose": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": {
+            "pivot": 4,
+            "ratios": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "range": {
+          "kind": "bounded-sphere",
+          "radius": 2
+        }
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "update-entity",
+    "schema": "request",
+    "value": {
+      "op": "update-entity",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "final": {
+        "parent": "00000000-0000-4000-8000-000000000002",
+        "pose": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": {
+            "pivot": 4,
+            "ratios": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "range": {
+          "kind": "bounded-sphere",
+          "radius": 2
+        }
+      },
+      "expected": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "delete-entity",
+    "schema": "request",
+    "value": {
+      "op": "delete-entity",
+      "element": "00000000-0000-4000-8000-000000000002",
+      "expected": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "operationId": "b3A",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "recover-entity",
+    "schema": "request",
+    "value": {
+      "op": "recover-outcome",
+      "reference": {
+        "boundary": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "anchor": "00000000-0000-4000-8000-000000000002"
+        },
+        "nextHop": "local:core"
+      },
+      "operationId": "b3A",
+      "request": {
+        "op": "create-entity",
+        "element": "00000000-0000-4000-8000-000000000002",
+        "final": {
+          "parent": "00000000-0000-4000-8000-000000000002",
+          "pose": {
+            "translation": [
+              0,
+              0,
+              0
+            ],
+            "rotation": {
+              "pivot": 4,
+              "ratios": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "range": {
+            "kind": "bounded-sphere",
+            "radius": 2
+          }
+        },
+        "operationId": "b3A"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "enter-result",
+    "schema": "response",
+    "value": {
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "boundary": {
+        "core": "00000000-0000-4000-8000-000000000001",
+        "anchor": "00000000-0000-4000-8000-000000000002"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "retained-query-result",
+    "schema": "response",
+    "value": {
+      "matches": [],
+      "scope": "00000000-0000-4000-8000-000000000002",
+      "actualUpDepth": "0",
+      "status": "COMPLETE",
+      "receipt": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "read-receipt",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "readMode": "RETAINED"
+    },
+    "valid": true
+  },
+  {
+    "name": "token-kind-confusion",
+    "schema": "request",
+    "value": {
+      "op": "read",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "read-receipt",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "address": {
+        "down": []
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "spare-base64-bits",
+    "schema": "request",
+    "value": {
+      "op": "read",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB"
+      },
+      "address": {
+        "down": []
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "depth-as-number",
+    "schema": "request",
+    "value": {
+      "op": "query",
+      "handle": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "space-handle",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "start": {
+        "down": []
+      },
+      "basis": {
+        "down": []
+      },
+      "upDepth": -1,
+      "sphere": {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "radius": 5
+      }
+    },
+    "valid": false
+  },
+  {
+    "name": "identity-injection",
+    "schema": "request",
+    "value": {
+      "op": "enter",
+      "reference": {
+        "boundary": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "anchor": "00000000-0000-4000-8000-000000000002"
+        },
+        "nextHop": "local:core"
+      },
+      "intent": "read",
+      "principal": "root"
+    },
+    "valid": false
+  },
+  {
+    "name": "begin",
+    "schema": "request",
+    "value": {
+      "op": "begin-observe",
+      "preparation": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-preparation",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "poll",
+    "schema": "request",
+    "value": {
+      "op": "poll",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "limit": 256
+    },
+    "valid": true
+  },
+  {
+    "name": "release",
+    "schema": "request",
+    "value": {
+      "op": "release-observe",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "empty-poll",
+    "schema": "response",
+    "value": {
+      "groups": [],
+      "nextCursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "terminal-poll",
+    "schema": "response",
+    "value": {
+      "groups": [
+        {
+          "changeId": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "change-id",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          "owner": "00000000-0000-4000-8000-000000000001",
+          "category": ["terminal"],
+          "basis": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "change-basis",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          "terminal": {
+            "operationId": "b3BlcmF0aW9uLWlkZW50aWZpZXI",
+            "source": "00000000-0000-4000-8000-000000000001",
+            "target": "00000000-0000-4000-8000-000000000002",
+            "finalCut": "42",
+            "settled": true,
+            "nextHop": "https://core-b.example.com:8443"
+          }
+        }
+      ],
+      "nextCursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "hidden-cut",
+    "schema": "response",
+    "value": {
+      "groups": [],
+      "nextCursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "cutSerial": 99
+    },
+    "valid": false
+  },
+  {
+    "name": "zero-poll-limit",
+    "schema": "request",
+    "value": {
+      "op": "poll",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "limit": 0
+    },
+    "valid": false
+  }
+]

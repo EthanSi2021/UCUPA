@@ -1,0 +1,68 @@
+# Cursor / IDE
+.cursor/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node / npm (root and subprojects)
+node_modules/
+.npm
+.pnpm-store
+*.tsbuildinfo
+
+# Build / output
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo
+.cache
+
+# Logs and debug
+*.log
+debug-*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Scripts / runtime generated (start-dev.ps1, etc.)
+.root_anchor_uuid
+
+# Temporary commit message file used to pass multiline messages to git
+# commit -F on PowerShell (where git commit -m mangles newlines).
+.commit-msg.tmp
+scripts/temp-*.sh
+
+# Environment and secrets (do not commit)
+.env
+.env.local
+.env.*.local
+
+# Go (when running from repo root)
+vendor/
+*.exe
+*.test
+*.out
+bin/
+.gocache/
+scripts/core-loadtest-linux
+
+# Remote build / upload scratch (e.g. pscp to k3s host)
+*-remote.tgz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Editor backup files
+*~
+
+# ImGui (when launched with CWD = repo root)
+/imgui.ini
+
+# OS
+.DS_Store
+Thumbs.db

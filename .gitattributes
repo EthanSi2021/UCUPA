@@ -1,0 +1,4 @@
+# Shell scripts must use LF so bash on Linux (remote CI/k8s) does not break on CRLF.
+*.sh text eol=lf
+# Keep gofmt's canonical line endings on every checkout, including Windows.
+*.go text eol=lf

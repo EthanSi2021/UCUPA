@@ -1,0 +1,285 @@
+syntax = "proto3";
+package ucupa.facet;
+option go_package = "ucupa/ucupa-facet/bindings/go/protobuf;facetpb";
+import "shared/api/network.proto";
+
+service WriterControlService {
+ rpc InspectWriter(ucupa.network.WriterInspectRequest) returns (ucupa.network.WriterResponse);
+ rpc HandoffWriter(ucupa.network.WriterHandoffRequest) returns (ucupa.network.WriterResponse);
+}
+
+// Content and relationship calls preserve independent owner authorization.
+// Private evidence below is confined to the fixed Core service interface.
+enum Presence { PRESENCE_UNSPECIFIED = 0; PRESENT = 1; NOT_FOUND = 2; }
+enum CommitStatus { COMMIT_UNSPECIFIED = 0; COMMITTED = 1; UNCHANGED = 2; }
+enum Category { CATEGORY_UNSPECIFIED = 0; SPATIAL = 1 [(ucupa.network.literal) = "spatial"]; CONTENT = 2 [(ucupa.network.literal) = "content"]; ATTACHMENT = 3 [(ucupa.network.literal) = "attachment"]; CONTACT = 4 [(ucupa.network.literal) = "contact"]; }
+message Access {
+  ucupa.network.AttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional string next_hop = 2 [(ucupa.network.required_value) = true];
+}
+message Expected {
+  oneof condition {
+    bool absent = 1;
+    ucupa.network.Token revision = 2 [(ucupa.network.token_kind) = RECORD_REVISION];
+  }
+}
+message GetRequest {
+  Access access = 1 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 2 [(ucupa.network.required_value) = true];
+  optional bool prepare_observe = 3;
+}
+message ListTypesRequest {
+  Access access = 1 [(ucupa.network.required_value) = true];
+  optional bool prepare_observe = 2;
+}
+message PutRequest {
+  Access access = 1 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 2 [(ucupa.network.required_value) = true];
+  optional bytes payload = 3 [(ucupa.network.required_value) = true];
+  Expected expected = 4 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 5 [(ucupa.network.required_value) = true];
+}
+message DeleteRequest {
+  Access access = 1 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+  optional bytes operation_id = 4 [(ucupa.network.required_value) = true];
+}
+message MutationCommand { oneof command { PutRequest put = 1; DeleteRequest delete = 2; } }
+message RecoverOutcomeRequest {
+  Access access = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  MutationCommand request = 3 [(ucupa.network.required_value) = true];
+}
+message BeginObserveRequest { ucupa.network.Token preparation = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_PREPARATION]; }
+message PollChangesRequest {
+  ucupa.network.Token cursor = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR];
+  optional uint32 limit = 2;
+}
+message ReleaseObserveRequest {
+  oneof context {
+    ucupa.network.Token preparation = 1 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+    ucupa.network.Token cursor = 2 [(ucupa.network.token_kind) = OBSERVATION_CURSOR];
+  }
+}
+message GetResult {
+  ucupa.network.Token receipt = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  optional Presence state = 2 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 3 [(ucupa.network.required_value) = true];
+  optional bytes payload = 4;
+  ucupa.network.Token revision = 5 [(ucupa.network.token_kind) = RECORD_REVISION];
+  ucupa.network.Token preparation = 6 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+}
+message ListTypesResult {
+  ucupa.network.Token receipt = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = READ_RECEIPT];
+  repeated bytes types = 2;
+  ucupa.network.Token preparation = 3 [(ucupa.network.token_kind) = OBSERVATION_PREPARATION];
+}
+message MutationResult {
+  optional CommitStatus status = 1 [(ucupa.network.required_value) = true];
+  ucupa.network.Token revision = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = RECORD_REVISION];
+}
+message ChangeGroup {
+  ucupa.network.Token change_id = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CHANGE_ID];
+  optional string owner = 2 [(ucupa.network.required_value) = true];
+  repeated Category category = 3;
+  ucupa.network.Token basis = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CHANGE_BASIS];
+}
+message BeginObserveResult { ucupa.network.Token cursor = 1 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR]; }
+message PollChangesResult {
+  repeated ChangeGroup groups = 1;
+  ucupa.network.Token next_cursor = 2 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = OBSERVATION_CURSOR];
+}
+message ReleaseObserveResult { optional bool released = 1 [(ucupa.network.required_value) = true]; }
+message GetResponse { oneof outcome { GetResult result = 1; ucupa.network.Failure failure = 2; } }
+message ListTypesResponse { oneof outcome { ListTypesResult result = 1; ucupa.network.Failure failure = 2; } }
+message PutResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message DeleteResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message RecoverOutcomeResponse { oneof outcome { MutationResult result = 1; ucupa.network.Failure failure = 2; } }
+message BeginObserveResponse { oneof outcome { BeginObserveResult result = 1; ucupa.network.Failure failure = 2; } }
+message PollChangesResponse { oneof outcome { PollChangesResult result = 1; ucupa.network.Failure failure = 2; } }
+message ReleaseObserveResponse { oneof outcome { ReleaseObserveResult result = 1; ucupa.network.Failure failure = 2; } }
+service FacetService {
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc ListTypes(ListTypesRequest) returns (ListTypesResponse);
+  rpc Put(PutRequest) returns (PutResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc RecoverOutcome(RecoverOutcomeRequest) returns (RecoverOutcomeResponse);
+  rpc BeginObserve(BeginObserveRequest) returns (BeginObserveResponse);
+  rpc PollChanges(PollChangesRequest) returns (PollChangesResponse);
+  rpc ReleaseObserve(ReleaseObserveRequest) returns (ReleaseObserveResponse);
+}
+
+message PublicAcceptanceRef {
+  optional string core = 1 [(ucupa.network.required_value) = true];
+  optional string element = 2 [(ucupa.network.required_value) = true];
+  ucupa.network.Token proposal = 3 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = ATTACHMENT_REVISION];
+}
+message AcceptAttachmentRequest {
+  PublicAcceptanceRef ref = 1 [(ucupa.network.required_value) = true];
+  optional string core_next_hop = 2 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 3 [(ucupa.network.required_value) = true];
+}
+message InspectAcceptanceRequest { PublicAcceptanceRef ref = 1 [(ucupa.network.required_value) = true]; }
+message UpdateCoreContactRequest {
+  PublicAcceptanceRef ref = 1 [(ucupa.network.required_value) = true];
+  optional string core_next_hop = 2 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 3 [(ucupa.network.required_value) = true];
+  ucupa.network.Token expected = 4 [(ucupa.network.required_value) = true, (ucupa.network.token_kind) = CONTACT_REVISION];
+}
+message PublicAcceptanceInspection {
+  PublicAcceptanceRef ref = 1 [(ucupa.network.required_value) = true];
+  optional bool found = 2 [(ucupa.network.required_value) = true];
+  optional string core_next_hop = 3;
+  ucupa.network.Token contact_revision = 4 [(ucupa.network.token_kind) = CONTACT_REVISION];
+}
+message PublicAcceptanceOutcome {
+  optional CommitStatus status = 1 [(ucupa.network.required_value) = true];
+  PublicAcceptanceInspection inspection = 2 [(ucupa.network.required_value) = true];
+}
+message AcceptAttachmentResponse { oneof outcome { PublicAcceptanceOutcome result = 1; ucupa.network.Failure failure = 2; } }
+message InspectAcceptanceResponse { oneof outcome { PublicAcceptanceInspection result = 1; ucupa.network.Failure failure = 2; } }
+message UpdateCoreContactResponse { oneof outcome { PublicAcceptanceOutcome result = 1; ucupa.network.Failure failure = 2; } }
+message RetireContentRequest {
+  PublicAcceptanceRef ref = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+}
+message RetireContentResponse { oneof outcome { PublicAcceptanceOutcome result = 1; ucupa.network.Failure failure = 2; } }
+service FacetRelationshipService {
+  rpc AcceptAttachment(AcceptAttachmentRequest) returns (AcceptAttachmentResponse);
+  rpc InspectAcceptance(InspectAcceptanceRequest) returns (InspectAcceptanceResponse);
+  rpc UpdateCoreContact(UpdateCoreContactRequest) returns (UpdateCoreContactResponse);
+  rpc RetireContent(RetireContentRequest) returns (RetireContentResponse);
+}
+
+// ServiceRevision is a lossless owner evidence value, not a public revision
+// token, login identity, authorization view or caller-supplied capability.
+message ServiceRevision {
+  optional bytes incarnation = 1 [(ucupa.network.required_value) = true];
+  optional uint64 sequence = 2 [(ucupa.network.required_value) = true];
+}
+message ServiceAttachmentKey {
+  optional string core = 1 [(ucupa.network.required_value) = true];
+  optional string facet = 2 [(ucupa.network.required_value) = true];
+  optional string element = 3 [(ucupa.network.required_value) = true];
+  ServiceRevision proposal = 4 [(ucupa.network.required_value) = true];
+}
+message ServiceFacetCut {
+  optional bytes incarnation = 1 [(ucupa.network.required_value) = true];
+  optional uint64 sequence = 2 [(ucupa.network.required_value) = true];
+}
+message ReadAcceptanceRequest { ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true]; }
+message ServiceAcceptanceRead {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bool found = 2 [(ucupa.network.required_value) = true];
+  ServiceFacetCut cut = 3 [(ucupa.network.required_value) = true];
+  ServiceFacetCut accepted_at = 4;
+}
+message ReadAcceptanceResponse { oneof outcome { ServiceAcceptanceRead result = 1; ucupa.network.Failure failure = 2; } }
+message ReadDispositionRequest { optional string element = 1 [(ucupa.network.required_value) = true]; }
+message ServiceDispositionRead {
+  ServiceAttachmentKey key = 1;
+  optional bool found = 2 [(ucupa.network.required_value) = true];
+  ServiceFacetCut cut = 3;
+}
+message ReadDispositionResponse { oneof outcome { ServiceDispositionRead result = 1; ucupa.network.Failure failure = 2; } }
+service FacetAcceptanceService {
+  rpc ReadAcceptance(ReadAcceptanceRequest) returns (ReadAcceptanceResponse);
+  rpc ReadDisposition(ReadDispositionRequest) returns (ReadDispositionResponse);
+}
+
+// The controlling Core's namespace-replacement peer evidence. Manifest bytes
+// travel opaquely in the exact journal-retained form. Private evidence below
+// is confined to the fixed Core service interface.
+message ReplacementStepRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+}
+message FenceSourceRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string target = 3 [(ucupa.network.required_value) = true];
+}
+message ReadSourceEntryRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 3 [(ucupa.network.required_value) = true];
+}
+message SettleSourceRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string target = 3 [(ucupa.network.required_value) = true];
+}
+message CheckTargetImportRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional bytes manifest = 3 [(ucupa.network.required_value) = true];
+  optional string core_next_hop = 4 [(ucupa.network.required_value) = true];
+}
+message StageTargetEntryRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional bytes type_ref = 3 [(ucupa.network.required_value) = true];
+  optional bytes payload = 4 [(ucupa.network.required_value) = true];
+}
+message AcceptTargetRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string core_next_hop = 3 [(ucupa.network.required_value) = true];
+}
+message InstallTargetRequest {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional bytes operation_id = 2 [(ucupa.network.required_value) = true];
+  optional string source = 3 [(ucupa.network.required_value) = true];
+  optional uint64 final_cut = 4 [(ucupa.network.required_value) = true];
+}
+message SourceExportState {
+  optional bool found = 1 [(ucupa.network.required_value) = true];
+  optional bool fenced = 2 [(ucupa.network.required_value) = true];
+  optional bool refused = 3 [(ucupa.network.required_value) = true];
+  optional bool settled = 4 [(ucupa.network.required_value) = true];
+  optional uint64 final_cut = 5;
+  optional bytes manifest_digest = 6;
+  optional bytes manifest = 7;
+}
+message FencedSource {
+  ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true];
+  optional uint64 final_cut = 2 [(ucupa.network.required_value) = true];
+  optional bytes manifest_digest = 3 [(ucupa.network.required_value) = true];
+  optional bytes manifest = 4 [(ucupa.network.required_value) = true];
+}
+message SourceEntry {
+  optional bytes type_ref = 1 [(ucupa.network.required_value) = true];
+  optional bytes payload = 2;
+}
+message ReplacementLiveEntry {
+  optional bytes type_ref = 1 [(ucupa.network.required_value) = true];
+  optional uint64 length = 2 [(ucupa.network.required_value) = true];
+}
+message TargetImportState {
+  optional bool accepted = 1 [(ucupa.network.required_value) = true];
+  optional bool installed = 2 [(ucupa.network.required_value) = true];
+  optional bytes digest = 3;
+  optional uint64 final_cut = 4;
+  repeated ReplacementLiveEntry live = 5;
+}
+message AcceptedTarget { ServiceAttachmentKey key = 1 [(ucupa.network.required_value) = true]; }
+message ReplacementStepDone { optional bool done = 1 [(ucupa.network.required_value) = true]; }
+message CheckSourceExportResponse { oneof outcome { SourceExportState result = 1; ucupa.network.Failure failure = 2; } }
+message FenceSourceResponse { oneof outcome { FencedSource result = 1; ucupa.network.Failure failure = 2; } }
+message ReadSourceEntryResponse { oneof outcome { SourceEntry result = 1; ucupa.network.Failure failure = 2; } }
+message SettleSourceResponse { oneof outcome { ReplacementStepDone result = 1; ucupa.network.Failure failure = 2; } }
+message CheckTargetImportResponse { oneof outcome { TargetImportState result = 1; ucupa.network.Failure failure = 2; } }
+message StageTargetEntryResponse { oneof outcome { ReplacementStepDone result = 1; ucupa.network.Failure failure = 2; } }
+message AcceptTargetResponse { oneof outcome { AcceptedTarget result = 1; ucupa.network.Failure failure = 2; } }
+message InstallTargetResponse { oneof outcome { ReplacementStepDone result = 1; ucupa.network.Failure failure = 2; } }
+service NamespaceReplacementService {
+  rpc CheckSourceExport(ReplacementStepRequest) returns (CheckSourceExportResponse);
+  rpc FenceSource(FenceSourceRequest) returns (FenceSourceResponse);
+  rpc ReadSourceEntry(ReadSourceEntryRequest) returns (ReadSourceEntryResponse);
+  rpc SettleSource(SettleSourceRequest) returns (SettleSourceResponse);
+  rpc CheckTargetImport(CheckTargetImportRequest) returns (CheckTargetImportResponse);
+  rpc StageTargetEntry(StageTargetEntryRequest) returns (StageTargetEntryResponse);
+  rpc AcceptTarget(AcceptTargetRequest) returns (AcceptTargetResponse);
+  rpc InstallTarget(InstallTargetRequest) returns (InstallTargetResponse);
+}

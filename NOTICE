@@ -1,0 +1,45 @@
+UCUPA third-party notices
+
+UCUPA source is offered under the Apache License, Version 2.0 in LICENSE.
+This source-only snapshot does not vendor dependencies or bundle executable
+products. External components retain their own copyrights and licenses.
+
+The following inventory covers the eight modules declared in the root go.mod.
+The accompanying license files are copied from the exact pinned module versions;
+identical upstream texts are shared, not rewritten or rebranded.
+
+Module and version                                             License text
+
+go.etcd.io/bbolt v1.5.0                                        MIT
+  third_party/licenses/bbolt.LICENSE.txt
+
+golang.org/x/net v0.58.0                                      BSD-3-Clause
+golang.org/x/sys v0.47.0                                      BSD-3-Clause
+golang.org/x/text v0.41.0                                     BSD-3-Clause
+  third_party/licenses/golang.LICENSE.txt
+
+google.golang.org/protobuf v1.36.12                           BSD-3-Clause
+  third_party/licenses/protobuf.LICENSE.txt
+
+github.com/santhosh-tekuri/jsonschema/v6 v6.0.2                 Apache-2.0
+  third_party/licenses/jsonschema.LICENSE.txt
+
+google.golang.org/grpc v1.83.2                                Apache-2.0
+google.golang.org/genproto/googleapis/rpc
+  v0.0.0-20260526163538-3dc84a4a5aaa                           Apache-2.0
+  third_party/licenses/grpc.LICENSE.txt
+
+The gRPC upstream attribution notice is retained separately in
+third_party/licenses/grpc.NOTICE.txt.
+
+Scope limits
+
+go.sum and Go module resolution include additional transitive and test modules.
+Their source is not bundled here. This inventory is not a complete license or
+attribution manifest for a future executable, container, vendor tree, or other
+redistribution. Such a distribution must inventory its actual included contents
+and preserve the applicable license and notice obligations.
+
+Protobuf generation tools, the Go/C toolchains, and Python interoperability
+dependencies are separately installed development tools, not bundled components.
+Their pinned setup is documented in RUN.md and acceptance/testdata/interop/README.md.

@@ -1,0 +1,774 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "mutation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "create-anchor"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "final": {
+              "$ref": "types.schema.json#/$defs/final"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "final",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "update-anchor"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "final": {
+              "$ref": "types.schema.json#/$defs/final"
+            },
+            "expected": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "final",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "delete-anchor"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "expected": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "create-entity"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "final": {
+              "$ref": "types.schema.json#/$defs/final"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "final",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "update-entity"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "final": {
+              "$ref": "types.schema.json#/$defs/final"
+            },
+            "expected": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "final",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "delete-entity"
+            },
+            "handle": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+            },
+            "expected": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "op",
+            "handle",
+            "element",
+            "expected",
+            "operationId"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "enter"
+        },
+        "reference": {
+          "$ref": "types.schema.json#/$defs/reference"
+        },
+        "intent": {
+          "enum": [
+            "read",
+            "list",
+            "query",
+            "create-anchor",
+            "create-entity",
+            "update-anchor",
+            "update-entity",
+            "delete-anchor",
+            "delete-entity"
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "reference",
+        "intent"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "close"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        }
+      },
+      "required": [
+        "op",
+        "handle"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "read"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "address": {
+          "$ref": "types.schema.json#/$defs/address"
+        },
+        "basis": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "prepareObserve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "address"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "list"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "address": {
+          "$ref": "types.schema.json#/$defs/address"
+        },
+        "limit": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/limit"
+        },
+        "continuation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/query-continuation"
+        },
+        "prepareObserve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "address"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "query"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "start": {
+          "$ref": "types.schema.json#/$defs/address"
+        },
+        "basis": {
+          "$ref": "types.schema.json#/$defs/address"
+        },
+        "upDepth": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/upDepth"
+        },
+        "sphere": {
+          "type": "object",
+          "properties": {
+            "center": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "center",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "selector": {
+          "enum": [
+            "anchors",
+            "entities",
+            "both"
+          ]
+        },
+        "limit": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/limit"
+        },
+        "continuation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/query-continuation"
+        },
+        "prepareObserve": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "start",
+        "basis",
+        "sphere"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "create-anchor"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "final": {
+          "$ref": "types.schema.json#/$defs/final"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "final",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "update-anchor"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "final": {
+          "$ref": "types.schema.json#/$defs/final"
+        },
+        "expected": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "final",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "delete-anchor"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "expected": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "create-entity"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "final": {
+          "$ref": "types.schema.json#/$defs/final"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "final",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "update-entity"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "final": {
+          "$ref": "types.schema.json#/$defs/final"
+        },
+        "expected": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "final",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "delete-entity"
+        },
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "expected": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "element": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        }
+      },
+      "required": [
+        "op",
+        "handle",
+        "element",
+        "expected",
+        "operationId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "begin-observe"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        }
+      },
+      "required": [
+        "op",
+        "preparation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "poll"
+        },
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        },
+        "limit": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/limit"
+        }
+      },
+      "required": [
+        "op",
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "release-observe"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        }
+      },
+      "required": [
+        "op",
+        "preparation"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "release-observe"
+        },
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "op",
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
+          "const": "recover-outcome"
+        },
+        "reference": {
+          "$ref": "types.schema.json#/$defs/reference"
+        },
+        "operationId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+        },
+        "request": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "create-anchor"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                },
+                "final": {
+                  "$ref": "types.schema.json#/$defs/final"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "final",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "update-anchor"
+                },
+                "final": {
+                  "$ref": "types.schema.json#/$defs/final"
+                },
+                "expected": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "final",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "delete-anchor"
+                },
+                "expected": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "create-entity"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                },
+                "final": {
+                  "$ref": "types.schema.json#/$defs/final"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "final",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "update-entity"
+                },
+                "final": {
+                  "$ref": "types.schema.json#/$defs/final"
+                },
+                "expected": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "final",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "const": "delete-entity"
+                },
+                "expected": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                },
+                "operationId": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                }
+              },
+              "required": [
+                "op",
+                "element",
+                "expected",
+                "operationId"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "reference",
+        "operationId",
+        "request"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

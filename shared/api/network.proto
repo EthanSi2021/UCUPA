@@ -1,0 +1,114 @@
+syntax = "proto3";
+package ucupa.network;
+option go_package = "ucupa/shared/bindings/go/protobuf;networkpb";
+
+import "google/protobuf/descriptor.proto";
+
+// These describe representation, never authorization or domain decisions.
+extend google.protobuf.FieldOptions { bool required_value = 51001; TokenKind token_kind = 51003; }
+extend google.protobuf.EnumValueOptions { string literal = 51002; }
+
+service SessionService {
+  rpc EstablishSession(EstablishSessionRequest) returns (EstablishSessionResponse);
+  rpc ReleaseSession(ReleaseSessionRequest) returns (ReleaseSessionResponse);
+}
+message EstablishSessionRequest {
+  optional string audience = 1 [(required_value) = true];
+  optional bytes credential_id = 2 [(required_value) = true];
+  optional bytes secret = 3 [(required_value) = true];
+}
+message EstablishSessionResponse { bytes session = 1; uint64 expires_in_seconds = 2; }
+message ReleaseSessionRequest {}
+message ReleaseSessionResponse {}
+
+// Identity is separate from permission. The opaque challenge carries no
+// publicly disclosed target address. Check requires a pinned service caller.
+service IdentityProofService {
+  rpc IssueIdentityProof(IssueIdentityProofRequest) returns (IdentityProof);
+  rpc CheckIdentityProof(CheckIdentityProofRequest) returns (CheckIdentityProofResponse);
+}
+message IdentityProof {
+  optional bytes payload = 1 [(required_value) = true];
+  optional bytes signature = 2 [(required_value) = true];
+}
+message IssueIdentityProofRequest {
+  optional string actor = 1 [(required_value) = true];
+  optional bytes challenge = 2 [(required_value) = true];
+  optional uint64 ttl_seconds = 3 [(required_value) = true];
+}
+message CheckIdentityProofRequest {
+  optional string verifier = 1 [(required_value) = true];
+  IdentityProof proof = 2 [(required_value) = true];
+}
+message CheckIdentityProofResponse { optional bool valid = 1 [(required_value) = true]; }
+
+enum Failure {
+  FAILURE_UNSPECIFIED = 0;
+  INVALID = 1; DENIED = 2; UNAVAILABLE = 3; NOT_FOUND = 4; GAP = 5;
+  INVALID_CONTEXT = 6; RESOURCE_EXHAUSTED = 7; CONFLICT = 8;
+  INDETERMINATE = 9; OUTCOME_UNKNOWN = 10; UNSUPPORTED_TYPE = 11;
+}
+enum TokenKind {
+  TOKEN_UNSPECIFIED = 0;
+  SPACE_HANDLE = 1 [(literal) = "space-handle"];
+  RECORD_REVISION = 2 [(literal) = "record-revision"];
+  ATTACHMENT_REVISION = 3 [(literal) = "attachment-revision"];
+  CONTACT_REVISION = 4 [(literal) = "contact-revision"];
+  READ_RECEIPT = 5 [(literal) = "read-receipt"];
+  QUERY_CONTINUATION = 6 [(literal) = "query-continuation"];
+  OBSERVATION_PREPARATION = 7 [(literal) = "observation-preparation"];
+  OBSERVATION_CURSOR = 8 [(literal) = "observation-cursor"];
+  CHANGE_ID = 9 [(literal) = "change-id"];
+  CHANGE_BASIS = 10 [(literal) = "change-basis"];
+  MOUNT_REVISION = 11 [(literal) = "mount-revision"];
+  TRANSITION_REVISION = 12 [(literal) = "transition-revision"];
+  CARRIER_REVISION = 13 [(literal) = "carrier-revision"];
+  FACET_REPLACEMENT_REVISION = 14 [(literal) = "facet-replacement-revision"];
+}
+message Token {
+  optional string owner = 1 [(required_value) = true];
+  optional TokenKind kind = 2 [(required_value) = true];
+  optional bytes value = 3 [(required_value) = true];
+}
+// The public Core-to-Facet attachment reference. This contains public tokens,
+// never the private attachment revision or control-read evidence.
+message AttachmentKey {
+  optional string core = 1 [(required_value) = true];
+  optional string facet = 2 [(required_value) = true];
+  optional string element = 3 [(required_value) = true];
+  Token proposal = 4 [(required_value) = true, (token_kind) = ATTACHMENT_REVISION];
+}
+message Boundary {
+  optional string core = 1 [(required_value) = true];
+  optional string anchor = 2 [(required_value) = true];
+}
+// Wrappers distinguish an absent path from an explicitly empty path.
+message ElementPath { repeated string items = 1; }
+message Vector3 { repeated double items = 1; }
+message Address { optional string origin = 1; optional uint64 up = 2; ElementPath down = 3; }
+message Reference {
+  Boundary boundary = 1 [(required_value) = true];
+  optional string next_hop = 2 [(required_value) = true];
+  optional string trust_hint = 3;
+}
+
+// Same-original-Store writer control. Installation secrets are never RPC fields.
+message WriterInspectRequest { optional bytes operation = 1; }
+message WriterHandoffRequest {
+ optional bytes operation = 1 [(required_value) = true];
+ optional uint64 expected_epoch = 2 [(required_value) = true];
+ optional bytes target = 3 [(required_value) = true];
+}
+message WriterDecision {
+ optional bytes operation = 1 [(required_value) = true];
+ optional uint64 closed_epoch = 2 [(required_value) = true];
+ optional bytes final_cut = 3 [(required_value) = true];
+ optional bool installed = 4 [(required_value) = true];
+}
+message WriterStatus {
+ optional string owner = 1 [(required_value) = true];
+ optional uint64 epoch = 2 [(required_value) = true];
+ optional bool pending = 3 [(required_value) = true];
+ WriterDecision decision = 4;
+}
+message WriterResponse { oneof outcome { WriterStatus result = 1; Failure error = 2; } }

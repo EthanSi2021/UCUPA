@@ -1,0 +1,314 @@
+[
+  {
+    "name": "get",
+    "schema": "request",
+    "value": {
+      "op": "get",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "prepareObserve": true
+    },
+    "valid": true
+  },
+  {
+    "name": "list-types",
+    "schema": "request",
+    "value": {
+      "op": "list-types",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "put",
+    "schema": "request",
+    "value": {
+      "op": "put",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "payload": "ImhlbGxvIg",
+      "expected": {
+        "absent": true
+      },
+      "operationId": "b3A"
+    },
+    "valid": true
+  },
+  {
+    "name": "delete",
+    "schema": "request",
+    "value": {
+      "op": "delete",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expected": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "operationId": "b3A"
+    },
+    "valid": true
+  },
+  {
+    "name": "recover-outcome",
+    "schema": "request",
+    "value": {
+      "op": "recover-outcome",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "operationId": "b3A",
+      "request": {
+        "op": "put",
+        "access": {
+          "key": {
+            "core": "00000000-0000-4000-8000-000000000001",
+            "facet": "00000000-0000-4000-8000-000000000001",
+            "element": "00000000-0000-4000-8000-000000000002",
+            "proposal": {
+              "owner": "00000000-0000-4000-8000-000000000001",
+              "kind": "attachment-revision",
+              "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            }
+          },
+          "nextHop": "local:facet"
+        },
+        "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "payload": "ImhlbGxvIg",
+        "expected": {
+          "absent": true
+        },
+        "operationId": "b3A"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "missing-content",
+    "schema": "response",
+    "value": {
+      "state": "NOT_FOUND",
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "receipt": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "read-receipt",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "preparation": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-preparation",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "get-content",
+    "schema": "response",
+    "value": {
+      "state": "PRESENT",
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "payload": "ImhlbGxvIg",
+      "revision": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "record-revision",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "receipt": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "read-receipt",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "legacy-short-type",
+    "schema": "request",
+    "value": {
+      "op": "get",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "typeRef": "b2xk"
+    },
+    "valid": false
+  },
+  {
+    "name": "noncanonical-base64-padding",
+    "schema": "request",
+    "value": {
+      "op": "put",
+      "access": {
+        "key": {
+          "core": "00000000-0000-4000-8000-000000000001",
+          "facet": "00000000-0000-4000-8000-000000000001",
+          "element": "00000000-0000-4000-8000-000000000002",
+          "proposal": {
+            "owner": "00000000-0000-4000-8000-000000000001",
+            "kind": "attachment-revision",
+            "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        "nextHop": "local:facet"
+      },
+      "typeRef": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "payload": "ImhlbGxvIg==",
+      "expected": {
+        "absent": true
+      },
+      "operationId": "b3A"
+    },
+    "valid": false
+  },
+  {
+    "name": "begin",
+    "schema": "request",
+    "value": {
+      "op": "begin-observe",
+      "preparation": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-preparation",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "poll",
+    "schema": "request",
+    "value": {
+      "op": "poll",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "limit": 256
+    },
+    "valid": true
+  },
+  {
+    "name": "release",
+    "schema": "request",
+    "value": {
+      "op": "release-observe",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "empty-poll",
+    "schema": "response",
+    "value": {
+      "groups": [],
+      "nextCursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "hidden-cut",
+    "schema": "response",
+    "value": {
+      "groups": [],
+      "nextCursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "cutSerial": 99
+    },
+    "valid": false
+  },
+  {
+    "name": "zero-poll-limit",
+    "schema": "request",
+    "value": {
+      "op": "poll",
+      "cursor": {
+        "owner": "00000000-0000-4000-8000-000000000001",
+        "kind": "observation-cursor",
+        "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "limit": 0
+    },
+    "valid": false
+  }
+]

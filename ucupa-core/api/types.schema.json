@@ -1,0 +1,452 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "up": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/up"
+        },
+        "down": {
+          "type": "array",
+          "items": {
+            "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+          },
+          "maxItems": 4096,
+          "minItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "properties": {
+        "boundary": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "anchor": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "core",
+            "anchor"
+          ],
+          "additionalProperties": false
+        },
+        "nextHop": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/nextHop"
+        },
+        "trustHint": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "boundary",
+        "nextHop"
+      ],
+      "additionalProperties": false
+    },
+    "pose": {
+      "type": "object",
+      "properties": {
+        "translation": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 3,
+          "minItems": 3
+        },
+        "rotation": {
+          "type": "object",
+          "properties": {
+            "pivot": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "ratios": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3
+            }
+          },
+          "required": [
+            "pivot",
+            "ratios"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "translation",
+        "rotation"
+      ],
+      "additionalProperties": false
+    },
+    "range": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "bounded-sphere"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "kind",
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "final": {
+      "type": "object",
+      "properties": {
+        "parent": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "pose": {
+          "type": "object",
+          "properties": {
+            "translation": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "maxItems": 3,
+              "minItems": 3
+            },
+            "rotation": {
+              "type": "object",
+              "properties": {
+                "pivot": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4
+                },
+                "ratios": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3
+                }
+              },
+              "required": [
+                "pivot",
+                "ratios"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "translation",
+            "rotation"
+          ],
+          "additionalProperties": false
+        },
+        "range": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "bounded-sphere"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "kind",
+            "radius"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "parent",
+        "pose",
+        "range"
+      ],
+      "additionalProperties": false
+    },
+    "record": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "anchor"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "revision": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "range": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "unbounded-root"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "revision",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "anchor",
+                "entity"
+              ]
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "revision": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+            },
+            "parent": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "pose": {
+              "type": "object",
+              "properties": {
+                "translation": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "maxItems": 3,
+                  "minItems": 3
+                },
+                "rotation": {
+                  "type": "object",
+                  "properties": {
+                    "pivot": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4
+                    },
+                    "ratios": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "maxItems": 3,
+                      "minItems": 3
+                    }
+                  },
+                  "required": [
+                    "pivot",
+                    "ratios"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "translation",
+                "rotation"
+              ],
+              "additionalProperties": false
+            },
+            "range": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "bounded-sphere"
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "kind",
+                "radius"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "revision",
+            "parent",
+            "pose",
+            "range"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "attachment": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "const": "NONE"
+            },
+            "revision": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/attachment-revision"
+            }
+          },
+          "required": [
+            "state",
+            "revision"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "state": {
+              "enum": [
+                "ACTIVE",
+                "DETACHED"
+              ]
+            },
+            "revision": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/attachment-revision"
+            },
+            "key": {
+              "type": "object",
+              "properties": {
+                "core": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                },
+                "facet": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                },
+                "element": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                },
+                "proposal": {
+                  "$ref": "../../shared/api/values.schema.json#/$defs/attachment-revision"
+                }
+              },
+              "required": [
+                "core",
+                "facet",
+                "element",
+                "proposal"
+              ],
+              "additionalProperties": false
+            },
+            "nextHop": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/nextHop"
+            },
+            "contactRevision": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/contact-revision"
+            }
+          },
+          "required": [
+            "state",
+            "revision",
+            "key",
+            "nextHop",
+            "contactRevision"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/change-id"
+        },
+        "owner": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "category": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "spatial",
+              "content",
+              "attachment",
+              "contact",
+              "terminal"
+            ]
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "basis": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/change-basis"
+        },
+        "terminal": {
+          "type": "object",
+          "properties": {
+            "operationId": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/operationId"
+            },
+            "source": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "target": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "finalCut": {
+              "type": "string",
+              "pattern": "^(?:0|[1-9][0-9]*)$"
+            },
+            "settled": {
+              "type": "boolean"
+            },
+            "nextHop": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/nextHop"
+            }
+          },
+          "required": [
+            "operationId",
+            "source",
+            "target",
+            "finalCut",
+            "settled",
+            "nextHop"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "changeId",
+        "owner",
+        "category",
+        "basis"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

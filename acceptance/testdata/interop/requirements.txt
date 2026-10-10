@@ -1,0 +1,7 @@
+# Test-only independent reference/client runtime; never installed by tests.
+grpcio==1.83.1
+protobuf==7.34.1
+cryptography==46.0.5
+typing_extensions==4.16.0
+cffi==2.1.1
+pycparser==3.0

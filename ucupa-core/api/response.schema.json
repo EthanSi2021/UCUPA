@@ -1,0 +1,519 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "dependentRequired": { "sourceGraph": ["closure"], "closure": ["sourceGraph"] },
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/space-handle"
+        },
+        "boundary": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "anchor": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            }
+          },
+          "required": [
+            "core",
+            "anchor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "handle",
+        "boundary"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "closed": {
+          "const": true
+        }
+      },
+      "required": [
+        "closed"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "closure": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest",
+          "not": { "const": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+        },
+        "readMode": {
+          "enum": [
+            "CURRENT_VERIFIED",
+            "RETAINED"
+          ]
+        },
+        "sourceGraph": { "$ref": "read-source-evidence.schema.json" },
+        "state": {
+          "const": "NOT_FOUND"
+        }
+      },
+      "required": [
+        "receipt",
+        "readMode",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "closure": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest",
+          "not": { "const": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+        },
+        "readMode": {
+          "enum": [
+            "CURRENT_VERIFIED",
+            "RETAINED"
+          ]
+        },
+        "sourceGraph": { "$ref": "read-source-evidence.schema.json" },
+        "state": {
+          "const": "PRESENT"
+        },
+        "record": {
+          "$ref": "types.schema.json#/$defs/record"
+        },
+        "attachment": {
+          "$ref": "types.schema.json#/$defs/attachment"
+        }
+      },
+      "required": [
+        "receipt",
+        "readMode",
+        "state",
+        "record",
+        "attachment"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "closure": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest",
+          "not": { "const": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+        },
+        "readMode": {
+          "enum": [
+            "CURRENT_VERIFIED",
+            "RETAINED"
+          ]
+        },
+        "sourceGraph": { "$ref": "read-source-evidence.schema.json" },
+        "records": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "anchor"
+                  },
+                  "element": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                  },
+                  "revision": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                  },
+                  "range": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "unbounded-root"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "address": {
+                    "type": "object",
+                    "properties": {
+                      "origin": {
+                        "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                      },
+                      "up": {
+                        "$ref": "../../shared/api/values.schema.json#/$defs/up"
+                      },
+                      "down": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                        },
+                        "maxItems": 4096,
+                        "minItems": 0
+                      }
+                    },
+                    "required": [
+                      "down"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "kind",
+                  "element",
+                  "revision",
+                  "range",
+                  "address"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "anchor",
+                      "entity"
+                    ]
+                  },
+                  "element": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                  },
+                  "revision": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+                  },
+                  "parent": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                  },
+                  "pose": {
+                    "type": "object",
+                    "properties": {
+                      "translation": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "maxItems": 3,
+                        "minItems": 3
+                      },
+                      "rotation": {
+                        "type": "object",
+                        "properties": {
+                          "pivot": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4
+                          },
+                          "ratios": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "maxItems": 3,
+                            "minItems": 3
+                          }
+                        },
+                        "required": [
+                          "pivot",
+                          "ratios"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "translation",
+                      "rotation"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "range": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "bounded-sphere"
+                      },
+                      "radius": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "radius"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "address": {
+                    "type": "object",
+                    "properties": {
+                      "origin": {
+                        "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                      },
+                      "up": {
+                        "$ref": "../../shared/api/values.schema.json#/$defs/up"
+                      },
+                      "down": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                        },
+                        "maxItems": 4096,
+                        "minItems": 0
+                      }
+                    },
+                    "required": [
+                      "down"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "kind",
+                  "element",
+                  "revision",
+                  "parent",
+                  "pose",
+                  "range",
+                  "address"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "maxItems": 256,
+          "minItems": 0
+        },
+        "status": {
+          "enum": [
+            "COMPLETE",
+            "PARTIAL"
+          ]
+        },
+        "continuation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/query-continuation"
+        }
+      },
+      "required": [
+        "receipt",
+        "readMode",
+        "records",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "receipt": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/read-receipt"
+        },
+        "preparation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-preparation"
+        },
+        "closure": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/digest",
+          "not": { "const": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" }
+        },
+        "readMode": {
+          "enum": [
+            "CURRENT_VERIFIED",
+            "RETAINED"
+          ]
+        },
+        "sourceGraph": { "$ref": "read-source-evidence.schema.json" },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "element": {
+                "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+              },
+              "kind": {
+                "enum": [
+                  "anchor",
+                  "entity"
+                ]
+              },
+              "revision": {
+                "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                  },
+                  "up": {
+                    "$ref": "../../shared/api/values.schema.json#/$defs/up"
+                  },
+                  "down": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+                    },
+                    "maxItems": 4096,
+                    "minItems": 0
+                  }
+                },
+                "required": [
+                  "down"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "element",
+              "kind",
+              "revision",
+              "address"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 256,
+          "minItems": 0
+        },
+        "scope": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "actualUpDepth": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/up"
+        },
+        "status": {
+          "enum": [
+            "COMPLETE",
+            "PARTIAL"
+          ]
+        },
+        "gap": {
+          "enum": [
+            "UNRESOLVED_COVERAGE",
+            "EXACT_WORK_LIMIT"
+          ]
+        },
+        "continuation": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/query-continuation"
+        }
+      },
+      "required": [
+        "receipt",
+        "readMode",
+        "matches",
+        "scope",
+        "actualUpDepth",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "COMMITTED",
+            "UNCHANGED"
+          ]
+        },
+        "record": {
+          "$ref": "types.schema.json#/$defs/record"
+        }
+      },
+      "required": [
+        "status",
+        "record"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "COMMITTED",
+            "UNCHANGED"
+          ]
+        },
+        "tombstoneRevision": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/record-revision"
+        }
+      },
+      "required": [
+        "status",
+        "tombstoneRevision"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "cursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "types.schema.json#/$defs/group"
+          },
+          "maxItems": 256,
+          "minItems": 0
+        },
+        "nextCursor": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/observation-cursor"
+        }
+      },
+      "required": [
+        "groups",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "released": {
+          "const": true
+        }
+      },
+      "required": [
+        "released"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

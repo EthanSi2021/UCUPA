@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "access": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object",
+          "properties": {
+            "core": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "facet": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "element": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+            },
+            "proposal": {
+              "$ref": "../../shared/api/values.schema.json#/$defs/attachment-revision"
+            }
+          },
+          "required": [
+            "core",
+            "facet",
+            "element",
+            "proposal"
+          ],
+          "additionalProperties": false
+        },
+        "nextHop": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/nextHop"
+        }
+      },
+      "required": [
+        "key",
+        "nextHop"
+      ],
+      "additionalProperties": false
+    },
+    "group": {
+      "type": "object",
+      "properties": {
+        "changeId": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/change-id"
+        },
+        "owner": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/uuid"
+        },
+        "category": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "spatial",
+              "content",
+              "attachment",
+              "contact"
+            ]
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "basis": {
+          "$ref": "../../shared/api/values.schema.json#/$defs/change-basis"
+        }
+      },
+      "required": [
+        "changeId",
+        "owner",
+        "category",
+        "basis"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
