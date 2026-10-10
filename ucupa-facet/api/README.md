@@ -1,59 +1,85 @@
-# Facet 本地公共 profile
+# Facet public representations
 
-入口为 `facet.Namespace.PublicCall(ctx, caller, canonicalJSON)`，其中 `facet` 由
-`ucupa-facet/instance` 创建或打开；caller 独立建立，不从请求字段推断。
-先在 Core 的 ACTIVE attachment 取得 key 与 NextHop，按该指定地址连接预期 Facet。
-公共 `access` 恰为 `{key:{core,facet,element,proposal},nextHop}`，proposal 是 Core 发行的不透明 token。
-不会把 owner 私有 AcceptanceKey 的字节编码直接发给客户端，也不按裸 Ref 解析地址。
+## Local public profile
 
-- [请求](request.schema.json)、[响应](response.schema.json)、[类型](types.schema.json)。
-- [正反例](conformance.json)。
-- [公共合同](../../docs/architecture/public-access-and-observation.md)定义全部时序、编码和失败语义。
+The entry is `facet.Namespace.PublicCall(ctx, caller, canonicalJSON)`, where
+`ucupa-facet/instance` creates or opens `facet`. Establish the caller separately;
+request fields cannot assert identity.
 
-`get`、`list-types` 可设置 `prepareObserve:true`；Facet 在 F0 准备本地队列，再由固定服务身份
-在 Core 获取 C0 控制准备，最后重验 F0/联系/授权才交付。服务端控制 token 永不转交客户端。
-`begin-observe`/`poll` 同时核验两侧连续性；Core detach/delete/联系变化即使没有 Facet 写入也会终止旧组合。
-`release-observe` 最佳努力释放对端准备，失联时由其独立期限回收，不持有 Facet 锁等待网络。
+Obtain the key and NextHop from Core's ACTIVE attachment, then connect to that address and
+verify the expected Facet. Public `access` is exactly
+`{key:{core,facet,element,proposal},nextHop}`; proposal is Core's opaque token.
+The owner's private AcceptanceKey byte encoding is not sent directly to clients.
+Bare Ref does not resolve an address.
 
-`put` 的 expected 为 `{absent:true}` 或 `{revision:token}`；`delete` 直接提供 expected token。
-`recover-outcome` 提供 access、OperationID 和原规范请求；只读自己的回执，不重新执行写入，
-也不新增 Core 在线或外部类型前置。
+- [Request](request.schema.json), [response](response.schema.json), [types](types.schema.json).
+- [Conformance cases](conformance.json).
+- The [public contract](../../docs/architecture/public-access-and-observation.md) defines
+  timing, encoding, and failure semantics.
 
-## P6 类型化网络表示（实现中）
+`get`/`list-types` may set `prepareObserve:true`. Facet prepares its local queue at F0,
+then obtains C0 control preparation from Core with the fixed service identity.
+It rechecks F0/contact/authorization before delivery. Server control tokens never reach clients.
+`begin-observe`/`poll` check both sides' continuity. Core detach/delete/contact changes
+end the old combination even without a Facet write.
+`release-observe` best-effort releases peer preparation; when disconnected, the peer's
+independent deadline reclaims it. No network wait holds the Facet lock.
 
-`facet.proto` 定义 Get、ListTypes、Put、Delete、RecoverOutcome、BeginObserve、
-PollChanges、ReleaseObserve 八个内容 RPC。公共 AttachmentKey 与 Core 返回的附着引用共用
-`shared/api/network.proto` 中的同一消息，不包含本地 AttachmentRevision／CoreCutEvidence 编码。
-由 `go run ./cmd/protogen` 使用仓内固定工具版本生成 Go 绑定；完整验证重新生成并比较。
+`put` expected is `{absent:true}` or `{revision:token}`; `delete` supplies the expected token
+directly. `recover-outcome` supplies access, OperationID, and the original canonical request.
+It reads only the caller's receipt, reexecutes no write, and adds no Core-online or external
+type prerequisite.
 
-`transport/grpc` 当前实现类型化消息到原 PublicCall 的适配与防御性响应检查；调用身份由 host
-的已认证会话边界提供，实际授权、接纳、精确重试、F0 与 Core 回查仍由原内核负责。
-`transport/grpc.New` 已提供有界 TLS 网络服务与短期会话，`sdk/go` 提供指定目标、证书绑定、
-会话和严格结果检查；通过真实 TCP/TLS 测试，不将 handler 当作完整网络证据。
-独立 `cmd/ucupa-facet` host、固定服务身份回查 Core 及附着关系网络控制写链均已实现。
-从空关系建立、双向联系修复到重启与解除的产品进程证据见 `acceptance/network_facet_relationship_product_test.go`。
-配置和限制见[宿主说明](../../cmd/ucupa-facet/README.md)。
-协议语料往返测试及真实 owner 适配测试分别在 `transport/grpc/representation_test.go` 和
-`acceptance/network_facet_adapter_test.go`；后者不冒充 TLS／独立进程验证。
-真实 TLS、会话容量、凭据撤销、目标错误与 transport 重建测试见 `acceptance/network_facet_test.go`；
-它的 Core 回查仍是本地固定服务适配，不冒充跨进程反向连接。
-新增 `acceptance/network_facet_reverse_test.go` 验证真实网络反向检查与观察，
-`acceptance/network_facet_process_test.go` 验证两个独立产品进程、不同 Realm、持久恢复及服务会话续建。
+## Typed network representation
 
-## 类型与不透明内容
+`facet.proto` defines eight content RPCs: Get, ListTypes, Put, Delete, RecoverOutcome,
+BeginObserve, PollChanges, and ReleaseObserve. Public AttachmentKey uses the same message
+as Core's attachment reference in `shared/api/network.proto`, without local
+AttachmentRevision/CoreCutEvidence encoding. `go run ./cmd/protogen` uses pinned repository
+tools to generate Go bindings; the full gate regenerates and compares them.
 
-TypeRef 是任意 32-byte 值（公开编码 43 字符），不解释为地址、名称或版本。
-P7.3a 起 Facet 不获取、解析或校验类型制品：Put 按 `(Element, TypeRef)` 保存有界、
-逐字节不变的不透明 Payload，不做 schema 校验；payload 上限 1 MiB，每个 Element 最多
-256 个当前类型。内容与回执使用同一事务；Get／ListTypes 只返回当前 key 的内容与类型集合。
+`transport/grpc` adapts typed messages to the original PublicCall and defensively checks
+responses. The host's authenticated session supplies caller identity; the original kernel
+owns authorization, acceptance, exact retries, F0, and Core rechecks.
+`transport/grpc.New` provides bounded TLS hosting and short-lived sessions.
+`sdk/go` provides specified targets, certificate binding, sessions, and strict result checks.
+Real TCP/TLS tests, not handlers alone, support the network evidence.
 
-## 配置与证明
+The independent `cmd/ucupa-facet` host, fixed-service Core checks, and network relationship
+control writes are implemented. `acceptance/network_facet_relationship_product_test.go`
+covers establishment from an empty relationship, bidirectional contact repair, restart,
+and detach. See the [host guide](../../cmd/ucupa-facet/README.md) for configuration and limits.
 
-New/CreateDurable/OpenDurable 均显式接收 Config。PublicAccessPolicy 不填则公共面关闭；
-两项 TTL 均无默认秒数，其他有限默认额度见合同。每个上下文 2 KiB、每组通知 512 逻辑字节；
-执行额外预留 `8×请求字节 + 4 MiB`，包含解码与最大内容返回批次，不只计算 payload。
-不同 Facet 的上下文和 Core 服务依赖均独立计费、独立到期，不合成全局 cut。
+Protocol round trips and actual-owner adaptation are tested in
+`transport/grpc/representation_test.go` and `acceptance/network_facet_adapter_test.go`;
+the latter is not TLS/independent-process evidence.
+`acceptance/network_facet_test.go` covers actual TLS, session capacity, credential revocation,
+wrong targets, and transport rebuilding. Its Core checks use a local fixed-service adapter,
+not a cross-process reverse connection.
+`acceptance/network_facet_reverse_test.go` covers actual network reverse checks/observation;
+`acceptance/network_facet_process_test.go` covers independent products, separate Realms,
+durable recovery, and service-session reestablishment.
 
-完整可运行链见 `go run ./cmd/ucupa`；[公共黑盒](../../acceptance/public_facet_test.go)、
-[并发/重启反例](../../acceptance/public_facet_failure_test.go)
-分别证明访问行为、服务/客户端隔离和容量边界；单独通过 schema 不代表通过业务或安全门。
+## Types and opaque content
+
+TypeRef is any 32-byte value, publicly encoded in 43 characters, not an address, name, or version.
+Since P7.3a, Facet retrieves, parses, and validates no type artifacts.
+Put stores bounded unchanged opaque Payload at `(Element, TypeRef)`, without schema validation.
+Payload is at most 1 MiB; each Element has at most 256 current types. Content and receipt share
+one transaction. Get/ListTypes return current-key content/current types only.
+
+## Configuration and evidence
+
+New/CreateDurable/OpenDurable explicitly receive Config. Omitted PublicAccessPolicy disables
+the public surface. Both TTLs require explicit durations; other finite defaults are in the
+contract. Each context costs 2 KiB, each notification group 512 logical bytes.
+Execution additionally reserves `8×request bytes + 4 MiB`,
+including decoding and maximum returned content batches, not payload alone.
+Different Facets and Core-service dependencies are accounted and expired independently;
+no global cut is assembled.
+
+Run the real chain with `go run ./cmd/ucupa`.
+[Public black-box tests](../../acceptance/public_facet_test.go) and
+[concurrency/restart counterexamples](../../acceptance/public_facet_failure_test.go)
+cover access, service/client isolation, and capacity. Schema conformance alone is not a
+behavioral or security pass.

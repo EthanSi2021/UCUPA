@@ -1,205 +1,288 @@
-# UCUPA Platform — 非规范投影
+# UCUPA Platform — non-normative overview
 
-**状态：当前非规范投影；仅投影已接受的基本公理与概念主线；不拥有规范或实现权威；不授权代码实现。**
+**Status: current non-normative projection of the accepted axioms and concept baseline.
+This document has no specification or implementation authority and does not authorize code.**
 
-本文只帮助从产品、真相分类和模块组织三个角度阅读 UCUPA。规范语义仅来自已接受的
-[《UCUPA 基本公理》](docs/architecture/ucupa-foundational-axioms.zh-CN.md)与
-[《UCUPA 概念与主线基线》](docs/architecture/ucupa-concept-mainline-baseline.zh-CN.md)。
-已交付的受限能力从[架构权威清单](docs/architecture/README.md)中的现行合同读取；
-实现范围与验证边界见[快照状态](docs/architecture/development-plan.md#1-当前在哪里)。
-若本文与二者冲突，本文错误；任何缺失或歧义必须回到规范来源裁决，不能在投影中补造新语义。
+This document presents UCUPA through its purpose, truth categories, and module organization.
+Normative semantics come only from the accepted
+[foundational axioms](docs/architecture/ucupa-foundational-axioms.zh-CN.md) and
+[concept and mainline baseline](docs/architecture/ucupa-concept-mainline-baseline.zh-CN.md).
+Read the current contracts in the [authority manifest](docs/architecture/README.md) for delivered
+bounded capabilities, and the [snapshot status](docs/architecture/development-plan.md#1-当前在哪里)
+for implementation and validation limits.
+If this overview conflicts with those specifications, this overview is wrong. Resolve omissions
+or ambiguity at the normative source rather than inventing semantics here.
 
-## 1. 产品目的
+## 1. Purpose
 
 **Spatial infrastructure for the united cyber universe**
 
 UCUPA stands for **The system of United Cyber Universe Position and Anchor**.
 It organizes a world as a tree of local coordinate frames, designed for growth in spatial extent
 and local detail. Independent operators store and maintain their own parts of that tree, using
-common identity and spatial rules rather than one central world database.（A1、A10；D1–D4、D6–D9）
+common identity and spatial rules rather than one central world database. (A1, A10; D1–D4, D6–D9)
 
-以上是对外定位，不将多个独立空间的互联作为项目的全部定义，也不承诺已验证的无限容量或精度。
-“工程原型”仅描述当前实现成熟度；能力和验证范围从现行合同与交付记录读取，不写入定位。
+This positioning does not reduce the project to bridges between separate spaces or promise
+verified infinite capacity or precision. “Engineering prototype” describes current maturity,
+not positioning; read current contracts and delivery records for supported and verified scope.
 
-UCUPA 的最小公共空间语义围绕 Element 展开：
+The minimum public spatial semantics center on Element:
 
-- `ElementUUID` 提供稳定且不可复用的同一性；它不是路径、位置、权限、owner 或 endpoint。（A2；D4）
-- Core 以 `Structure + parent-relative Pose + Range` 描述 Element 的空间存在与组织。（A3、A4；D1–D4）
-- Facet 是可选的不透明内容扩展；Core-only Element 可以完整成立，Facet 不复制 Core 真相，也不拥有 Element existence。TypeRef 不赋予 Facet 内容格式校验职责。（A6；D5、D6）
-- authority、access control、reachability 与 deployment 相互正交，不能互相推出。（A7、A10；D6–D8、D12）
-- 上层应用可以消费和扩展这些事实，但不能建立竞争的 UCUPA 世界真相。（A10）
+- `ElementUUID` is stable, non-reusable identity, not a path, position, permission, owner,
+  or endpoint. (A2; D4)
+- Core represents spatial existence and organization as
+  `Structure + parent-relative Pose + Range`. (A3, A4; D1–D4)
+- Facet is optional opaque content. A Core-only Element is complete; Facet neither copies
+  Core truth nor owns Element existence. TypeRef does not require Facet to validate content
+  formats. (A6; D5, D6)
+- Authority, access control, reachability, and deployment are orthogonal; none implies
+  another. (A7, A10; D6–D8, D12)
+- Applications may consume and extend these facts, but must not create competing UCUPA
+  world truth. (A10)
 
-“逻辑无界”表示体系能持续接入新的有限空间和自治权威而不改变公共语义；它不承诺无限精度、
-无限单点容量、永久可用或一次请求遍历全部空间。（A1、A9、A10；D3、D10）
+“Logically unbounded” means finite spaces and autonomous authorities can continue joining
+without changing public semantics. It does not promise infinite precision, unlimited single-owner
+capacity, permanent availability, or traversal of the entire space in one request.
+(A1, A9, A10; D3, D10)
 
-## 2. 五类公共行为
+## 2. Five public behaviors
 
-UCUPA 对外投影为五类产品中立行为；这些名称不冻结 Go API、wire、进程或部署形态。
+These product-neutral categories do not freeze Go APIs, wire spelling, processes, or deployment.
 
-1. **Enter**：从可验证的 `SpaceReference` 取得边界与明确入口，结合 caller trust evidence 并验证连接目标，建立临时 `SpaceHandle`；不要求先按 Ref 查地址目录。（A8；D7–D9）
-2. **Discover**：在明确的结构 closure 中按 `StructuralAddress`、直接结构或 `QueryRegion` 发现未知 Element；有效查询只返回带证据的 `COMPLETE`／`PARTIAL`，无法形成有效查询时则在结果前明确返回 `INVALID`／`DENIED`／`UNAVAILABLE` outcome。（A8、A9；D9、D10）
-3. **Read**：从已确认的 Core／Facet authority 读取 exact record、absence 或失败，并携带 Revision、ReadCut 与来源证据。（A6、A9；D4–D6、D11）
-4. **Observe**：从 owner read cut 继续观察已提交变化；中断、过期或 source graph 变化必须可恢复或显式报告 GAP。（A9；D11）
-5. **Propose**：向相应 fact owner 提交有身份、前置条件和稳定 OperationID 的提案；只有 owner 接受并提交后才产生新事实。（A7；D4–D8、D12）
+1. **Enter**: obtain a verifiable boundary and explicit entry from `SpaceReference`, combine
+   caller trust evidence, verify the connection target, and establish a temporary
+   `SpaceHandle`. No prior reference-to-address directory lookup is required. (A8; D7–D9)
+2. **Discover**: find unknown Elements within an explicit structural closure through
+   `StructuralAddress`, direct structure, or `QueryRegion`. Valid queries return evidenced
+   `COMPLETE` or `PARTIAL`; if no valid query can be formed, return an explicit
+   `INVALID`, `DENIED`, or `UNAVAILABLE` outcome before results. (A8, A9; D9, D10)
+3. **Read**: obtain an exact record, absence, or failure from the established Core/Facet
+   authority, with Revision, ReadCut, and source evidence. (A6, A9; D4–D6, D11)
+4. **Observe**: continue from an owner read cut through committed changes. Interruption,
+   expiry, and source-graph changes must be recoverable or explicitly report GAP. (A9; D11)
+5. **Propose**: submit identity, preconditions, and stable OperationID to the relevant fact
+   owner. New facts exist only after that owner accepts and commits. (A7; D4–D8, D12)
 
-`Resolve`、`ListDirect` 与 `QueryRegion` 是 Discover 的不同形态；create、update、reanchor、delete
-与 Facet mutation 是 owner-specific Propose。公共薄腰不要求一个通用 CRUD 接口。（D4、D5、D10）
+`Resolve`, `ListDirect`, and `QueryRegion` are different Discover forms.
+Create, update, reanchor, delete, and Facet mutation are owner-specific Propose forms.
+The public common interface does not require a generic CRUD API. (D4, D5, D10)
 
-## 3. Platform 视图
+## 3. Platform view
 
 ```text
-上层应用与外部资源
+Applications and external resources
 Applications / robotics / other consumers
                     │
       Enter / Discover / Read / Observe / Propose
                     │
-════════════ UCUPA 公共空间薄腰 ════════════
- Core：Element existence / Structure / Pose / Range
+══════════ UCUPA public spatial interface ══════════
+ Core: Element existence / Structure / Pose / Range
        + per-Element FacetAttachment
- Facet：optional exact opaque content keyed by Element + TypeRef
-────────────────────────────────────────────
+ Facet: optional exact opaque content keyed by Element + TypeRef
+───────────────────────────────────────────────────
  fact authority / access-control / reachability / deployment
-────────────────────────────────────────────
- 可替换 Store / index / transport / gateway / deployment
+───────────────────────────────────────────────────
+ Replaceable Store / index / transport / gateway / deployment
 ```
 
-### 3.1 Core 空间视图
+### 3.1 Core spatial view
 
-Core 产品面独占 Element 空间事实语义；每个有效事实切面由恰一个 Core-kind `FactAuthorityRef` 拥有。
-普通 Element record 至少表达稳定 `ElementUUID`、封闭 `Kind`、当前 Structure、相对父 Anchor 的
-LocalPose、Range 与 owner-local Revision；root 没有 LocalPose。（A2–A4、A7；D1–D4、D6）
+Core exclusively owns Element spatial semantics. Exactly one Core-kind `FactAuthorityRef`
+owns each valid fact cut. An ordinary record includes stable `ElementUUID`, closed `Kind`,
+current Structure, parent-relative LocalPose, Range, and owner-local Revision.
+A root has no LocalPose. (A2–A4, A7; D1–D4, D6)
 
-Range 是以该 Element 为根的结构闭包的保守发现覆盖：Entity Range 覆盖该 occurrence，普通 Anchor
-Range 覆盖其 zone；bounded parent 必须直接包含每个 child 投影后的完整 Range，独立空间唯一无父
-Anchor 使用类型化 `UNBOUNDED_ROOT`。（D2）
+Range conservatively covers the structural closure rooted at that Element for discovery.
+An Entity Range covers its occurrence; an ordinary Anchor Range covers its zone.
+A bounded parent must directly contain each child's entire projected Range.
+An independent space's sole parentless Anchor uses typed `UNBOUNDED_ROOT`. (D2)
 
-坐标真相只有右手 Cartesian `SE(3)`、统一单位且无 scale。polar／geodetic 等只能是边界投影；
-数值不确定性必须向不漏报方向收敛，不能制造 false negative。（D1、D3）
+Coordinate truth is right-handed Cartesian `SE(3)`, with uniform units and no scale.
+Polar or geodetic representations are boundary projections only. Numerical uncertainty must
+favor no missed intersections, not create false negatives. (D1, D3)
 
-### 3.2 Facet 扩展视图
+### 3.2 Facet content view
 
-Facet 是可选专用扩展。只有 Core 空间事实的 Element 已经完整；需要独立 owner 保存内容、权限、
-Revision 或生命周期时，Facet truth 才由 `(ElementUUID, FacetTypeRef)` 精确定位，
-包含 exact payload 与 owner-local Revision。
-`FacetTypeRef` 是固定 32-byte 的不透明键，不要求可解析的类型制品或中央 schema service。
-Facet 按原始字节保存和返回有界 Payload，不解析内容或执行 schema 校验；上层自行约定和验证
-格式与业务含义。权限、容量、接受关系和 Revision 前置条件仍由对应 owner 检查。（A6；D5）
+Facet is optional specialized content. An Element with only Core spatial facts is complete.
+When content needs an independent owner, permissions, Revision, or lifecycle, exact
+`(ElementUUID, FacetTypeRef)` identifies Facet truth: payload and owner-local Revision.
+`FacetTypeRef` is an opaque fixed 32-byte key; no resolvable type artifact or central schema
+service is required. Facet stores and returns bounded payload bytes unchanged, without parsing
+or schema validation. Applications agree on and validate format and business meaning.
+The relevant owner still checks permissions, capacity, acceptance, and Revision preconditions.
+(A6; D5)
 
-Core existence 是 Facet 可见性和 mutation 的前提。Facet 不能复活已删除 Element；Core 与 Facet
-也不伪装成一个跨 owner 原子事务。（A6、A10；D5、D6、D11）
+Core existence is a prerequisite for Facet visibility and mutation. Facet cannot resurrect
+a deleted Element, and Core/Facet do not pretend to share a cross-owner atomic transaction.
+(A6, A10; D5, D6, D11)
 
-Core 还权威保存并返回该 Element 的 Facet 关系：`NONE`、带 matching proposal/acceptance
-的 `ACTIVE(exact FacetAuthorityRef)`、保留未证明删除语义的 `DETACHED`，以及 P7 明确处置后的
-`RETIRED`。退役不是从未附着，不能隐去或自动复活；具体终态规则见
-[生命周期合同](docs/architecture/owner-transition-contract.md)。它不属于 Element 空间记录；
-其 pending／ACTIVE 联系记录保存预期 Facet 身份与指定 `FacetNextHop`。Facet 按 exact AcceptanceKey
-保留可维护的 `CoreNextHop`，不覆盖 immutable acceptance，也不建立 current-Core 指针。
-Core existence 不是 Facet 可服务的充分条件；Core exact read 从 ACTIVE attachment 形成 `FacetAccessContext`，
-Facet 据其选择 exact 关系联系、fresh-read source Core 并验证 matching acceptance。只有 matching `ACTIVE` cut
-才能定位完整 namespace；Get／类型枚举还须验证所捕获的 Facet cut 与联系仍成立。（D5、D6、D11）
+Core also owns and returns the Element's Facet relationship: `NONE`,
+`ACTIVE(exact FacetAuthorityRef)` with matching proposal/acceptance, `DETACHED` without an
+inferred deletion, and `RETIRED` after explicit P7 disposal. Retirement is not “never attached”
+and cannot be hidden or automatically revived; terminal rules are in the
+[lifecycle contract](docs/architecture/owner-transition-contract.md).
+This relation is separate from the Element spatial record. Its pending/ACTIVE contact records
+hold the expected Facet identity and specified `FacetNextHop`. Facet retains a maintainable
+`CoreNextHop` per exact AcceptanceKey, without overwriting immutable acceptance or creating
+a current-Core pointer.
 
-Core mount 与 Facet attachment 共用“预期 `FactAuthorityRef`＋权威指定 `NextHop`”的联系原则。
-两方向由各自本地 owner 维护；纯联系变化只推进联系 token 与该 owner cut，不改变 Element／Facet Revision、
-关系身份、生命周期或 writer fence。服务入口由部署环境提供，联系记录决定本关系采用哪个入口；
-不是所有 Ref 都携带地址，也不是每个 authority 只有一个全球地址。不再建设强制的 Ref → 地址目录，
-目标认证、网络传输和多地址能力仍须分别按现行合同与证据声明；
-TypeRef 不参与服务寻址，Facet 不内置类型合同解析器。（A5–A8；D5、D6、D8）
+Core existence alone does not make Facet content serviceable. A Core exact read forms
+`FacetAccessContext` from its ACTIVE attachment; Facet selects the exact relation contact,
+fresh-reads the source Core, and verifies matching acceptance. Only a matching `ACTIVE` cut
+locates the full namespace. Get/type enumeration also rechecks the captured Facet cut and contact.
+(D5, D6, D11)
 
-### 3.3 接入、结构地址与发现视图
+Core mounts and Facet attachments share the contact principle:
+expected `FactAuthorityRef` plus owner-specified `NextHop`. Each local owner maintains its
+own direction. Contact-only changes advance that contact token and owner cut, not Element/Facet
+Revision, relationship identity, lifecycle, or writer fence. Deployment supplies service entries;
+the relation contact selects an entry. Not every reference contains an address, and an authority
+need not have one global address. There is no mandatory Ref-to-address directory. Claim target
+authentication, network transport, and multi-address support separately under their contracts
+and evidence. TypeRef does not address services; Facet has no built-in type-contract parser.
+(A5–A8; D5, D6, D8)
 
-`SpaceReference` 是可分享的 bootstrap 描述，`SpaceHandle` 是某 caller 当次进入后组合出的临时上下文；
-二者都不是新的世界对象、永久 locator 或可转移权限。（A8；D9）
+### 3.3 Entry, structural addressing, and discovery
 
-`StructuralAddress` 是已接入空间中从已知 Anchor 上行／下行的结构路径，由选定切面的 Structure 派生；
-遵守显式 boundary，reparent 后 current 地址可以变化。
-裸 `ElementUUID` 只能确认同一性，不能触发对开放体系的全局查找。（A2、A8；D9）
+`SpaceReference` is shareable bootstrap information. `SpaceHandle` is a temporary context
+assembled for one caller's entry. Neither is a new world object, permanent locator, or
+transferable permission. (A8; D9)
 
-Discover 用 Start 与向上深度选定 Scope，完整搜索该 Scope 及后代，不设向下深度。
-向上深度 -1 表示不限层数，直到已证明的空间根或明确接入边界；不扩大权限，也不把断连当作到根。
-UpDepth 是语义范围选择；转发 hop、fan-out、deadline 和 page size 等执行限制不能偷改范围或把未检查空间当空。
-每 Core 启动时可选配置 SnapshotRetention，没有默认保留时长；未填关闭，显式有效正时长启用，
-无效值使配置失败。关闭仍可查询、分页和按原切面精确读：CurrentVerified 每次核对原 cut 仍 current，
-已变就明确过期；Retained 则在有限期限内保留旧视图，普通写入不使旧页失效。
-跨 Core 只要本次实际来源（含证明方）有一方关闭，整链使用 CurrentVerified；全部启用才使用 Retained。
-ReadMode 在首页确定并公开，资源不足不自动换模式；未启用不等于不可达、过期或内容缺口。
-普通写入仍可靠提交、普通读取默认最新；旧链不切 latest，来源及关系仍须验证，不宣称全网一致。（A9；D9、D10）
+`StructuralAddress` is an upward/downward structural path from a known Anchor in an entered
+space, derived from the selected cut's Structure. It respects explicit boundaries; reparenting
+may change the current address. Bare `ElementUUID` establishes identity only, not global
+lookup across an open system. (A2, A8; D9)
 
-### 3.4 Realm 授权联系视图
+Discover selects Scope using Start and upward depth, then searches that Scope and all descendants
+without a downward depth limit. Upward depth -1 continues to a proven root or explicit entry
+boundary. It does not enlarge permission or equate disconnection with reaching a root.
+UpDepth selects semantic scope; execution limits such as forwarding hops, fan-out, deadline,
+and page size must not silently shrink it or treat unchecked space as empty.
 
-Core／Facet 到 Realm 的访问沿用相同联系原则：`RealmAttachment` 指明已有 `RealmID` 和指定
-`NextHop`，接收方按受控联系核对目标并完成身份／权限校验，不另建 Ref 地址目录。
-它是授权访问链，不复制 Realm 的 PermissionBinding，不改变事实归属。
-已交付的 S2 实现由每个 Core／Facet 在自身 Store 保存唯一联系，不在每个 Element 或 payload
-重复记录；支持受控本地装配和独立 Realm 服务的网络联系，以及同 Realm 的指定地址维护。
-网络等待在事实锁外，最终读写边界仍核对请求、授权依据和联系代次；不可达不变成离线 Allow。
-多个 Realm 各自自治，不要求总 Realm 或多副本。具体行为见
-[RealmAttachment 合同](docs/architecture/realm-attachment-contract.md)；
-这些能力不等于真实多机 Realm、生产规模或高可用均已验证。（D7、D8）
+Each Core can configure SnapshotRetention at startup: omission disables it, an explicit valid
+positive duration enables it, and invalid input fails configuration. There is no default duration.
+Queries, pagination, and same-cut exact reads remain available when retention is off:
+CurrentVerified rechecks that the original cut remains current and explicitly expires on change.
+Retained holds the old view for a finite period; ordinary writes do not invalidate its pages.
 
-## 4. Minimum-truth 投影矩阵
+A cross-Core chain uses CurrentVerified if any actual source, including an evidence provider,
+has retention disabled; it uses Retained only if all enable it. The first page fixes and exposes
+ReadMode. Resource shortage does not silently switch modes. Disabled retention is not
+unreachability, expiry, or missing content. Ordinary writes remain durable, ordinary reads default
+to current state, and old chains do not switch to latest. Sources and relations remain subject
+to validation; this is not a network-wide consistency promise. (A9; D9, D10)
 
-| 分类 | 投影内容 | 唯一 owner／来源 | 明确不是 |
+### 3.4 Realm authorization contacts
+
+Core/Facet access to Realm follows the same contact principle: `RealmAttachment` names an
+existing `RealmID` and specified `NextHop`. The receiver verifies the target and performs
+identity/permission checks through that controlled contact, without a reference directory.
+This is an authorization access chain; it copies no Realm PermissionBinding and changes
+no fact ownership.
+
+In the delivered S2 implementation, each Core/Facet stores one contact in its own Store,
+not per Element or payload. Supported profiles are controlled local assembly, a network contact
+to an independent Realm service, and specified-address maintenance within the same Realm.
+Network waits occur outside fact locks; final read/write boundaries recheck request,
+authorization evidence, and contact generation. Unreachability never becomes offline Allow.
+Realms remain autonomous without a required global Realm or replicas. See the
+[RealmAttachment contract](docs/architecture/realm-attachment-contract.md).
+These capabilities do not establish verified real multi-host Realm operation, production scale,
+or HA. (D7, D8)
+
+## 4. Minimum-truth matrix
+
+| Category | Projected content | Sole owner/source | Explicitly not |
 |---|---|---|---|
-| Core 世界真相 | Element identity、Kind、existence、Structure、LocalPose、Range、ElementRevision，以及删除后 UUID 永不复用的不变量 | 对应 Core-kind `FactAuthorityRef`（A2–A4；D1–D4、D6） | WorldPose、路径、索引、Route、Endpoint、Cluster |
-| Facet 世界真相 | 可选 exact `FacetKey`、payload 与 FacetRevision | 对应 Facet-kind `FactAuthorityRef`（A6；D5、D6） | Element existence、FacetAttachment、Core 空间副本、类型服务 endpoint |
-| 事实权威控制 | `FactAuthorityRef`、Core delegation／acceptance、逐 Element FacetAttachment proposal／acceptance、writer fence 与 transition 状态 | 每项控制事实的明确 owner（A7、A10；D6、D12） | Realm Allow、实际可达性、部署位置 |
-| 身份与权限控制 | caller evidence、owner-local `PrincipalRef`、PermissionBinding、closure-bounded authorization view | access-control／trust owner；当前产品组织由 Realm 承载（A6、A7；D7） | Core／Facet ownership、事实存在、Route |
-| 联系控制 | 按 exact 跨服务关系保存的预期目标身份与权威指定 NextHop；事实服务使用 FactAuthorityRef，RealmAttachment 使用 RealmID；具体修订和持久边界由对应合同确定 | 保存该方向联系记录的明确 owner（A5、A7；D6–D8） | Ref → 地址目录、全球单一地址、ownership 切换、permission、writer activation |
-| 部署控制 | Cluster、进程、Store、placement 与运行拓扑 | deployment owner；不进入公共空间真相（A7；D8、D12） | Element identity、FactAuthorityRef、空间结构 |
-| 派生值 | WorldPose、StructuralAddress、SubtreeEnvelope、索引、query result、派生事件、cursor、cache、地址解析结果与实际连接／可达性状态 | 从权威事实、联系控制及当前运行上下文重建（A5、A9；D8–D11） | 第二真相、全局 Revision、第二 writer、可任意丢弃的联系控制历史 |
-| 延后机制 | API／wire 拼写、Store schema、索引算法、partitioning、credential 与 TLS、lease clock、具体部署和产品 Facet 合同 | 由后续明确合同选择（D1、D3、D5、D7–D12） | 当前空间公理或本文可决定的实现 |
+| Core world truth | Element identity, Kind, existence, Structure, LocalPose, Range, ElementRevision, permanent non-reuse of deleted UUIDs | Relevant Core-kind `FactAuthorityRef` (A2–A4; D1–D4, D6) | WorldPose, path, index, Route, Endpoint, Cluster |
+| Facet world truth | Optional exact `FacetKey`, payload, FacetRevision | Relevant Facet-kind `FactAuthorityRef` (A6; D5, D6) | Element existence, FacetAttachment, copied Core space, type-service endpoint |
+| Fact-authority control | `FactAuthorityRef`, Core delegation/acceptance, per-Element FacetAttachment proposal/acceptance, writer fence, transition state | Explicit owner of each control fact (A7, A10; D6, D12) | Realm Allow, actual reachability, deployment location |
+| Identity/permission control | Caller evidence, owner-local `PrincipalRef`, PermissionBinding, closure-bounded authorization view | Access-control/trust owner; packaged as Realm here (A6, A7; D7) | Core/Facet ownership, fact existence, Route |
+| Contact control | Expected target identity and specified NextHop per exact cross-service relation; FactAuthorityRef for fact services, RealmID for RealmAttachment; revisions and persistence defined by each contract | Owner storing that direction's contact (A5, A7; D6–D8) | Ref-to-address directory, one global address, ownership switch, permission, writer activation |
+| Deployment control | Cluster, process, Store, placement, runtime topology | Deployment owner, outside public spatial truth (A7; D8, D12) | Element identity, FactAuthorityRef, spatial structure |
+| Derived values | WorldPose, StructuralAddress, SubtreeEnvelope, indexes, query results, derived events, cursors, caches, address-resolution results, actual connection/reachability state | Reconstructed from authoritative facts, contact control, and current runtime context (A5, A9; D8–D11) | Second truth, global Revision, second writer, arbitrarily discardable contact-control history |
+| Deferred mechanisms | API/wire spelling, Store schema, index algorithm, partitioning, credentials/TLS, lease clock, deployment, product Facet contracts | Selected through later explicit contracts (D1, D3, D5, D7–D12) | Current spatial axioms or implementation choices this overview can make |
 
-每项事实和控制状态都必须有唯一、可验证的 owner 边界。读取多个 owner 时保留 per-owner cuts；
-不存在把它们合成全局 Revision、全局原子 snapshot 或跨 owner 事务的隐含权威。（A7、A9、A10；D6、D10、D11）
+Every fact and control state requires a unique verifiable owner boundary. Multi-owner reads
+retain per-owner cuts; no implicit authority combines them into a global Revision, globally
+atomic snapshot, or cross-owner transaction. (A7, A9, A10; D6, D10, D11)
 
-## 5. Authority、联邦与 transition 规则
+## 5. Authority, federation, and transitions
 
-- parent Core authority 继续拥有 mount Anchor record；accepted carrier Core authority 只拥有该边界的 contents coverage，不复制 mount Anchor。（D6）
-- delegation、acceptance、access permission、指定联系与 deployment 是不同控制关系；其中任何一个都不能自动授予另一个。（A7、A10；D6–D8）
-- Realm 建立身份并判断权限，不拥有 Core／Facet 真相；Cluster 只表达承载环境，不是 fact owner。（A7；D6–D8）
-- 联系信息只回答本关系怎样抵达预期 authority；按指定入口连接后仍须验证目标与关系。联系失效只导致不可用或部分结果，不能删除事实或转移 authority。（A5、A7；D8、D10）
-- 经 D12 连续性证据接受的 owner transition 保持 ElementUUID；新 writer 启用前旧 writer 必须被持久 fencing，允许明确不可用窗口，禁止 shadow、dual write 与双显。（A2、A7、A10；D12）
-- reanchor 改变 Structure／Pose 但不改变 ElementUUID；跨 Core transition 不自动迁移或复用 Facet attachment acceptance。（D4、D6、D12）
+- Parent Core authority retains the mount Anchor record. The accepted carrier Core owns
+  contents coverage below that boundary, without copying the mount Anchor. (D6)
+- Delegation, acceptance, access permission, specified contact, and deployment are distinct.
+  None automatically grants another. (A7, A10; D6–D8)
+- Realm establishes identity and decides permission, not Core/Facet truth. Cluster represents
+  hosting infrastructure, not a fact owner. (A7; D6–D8)
+- Contact information says how this relation reaches the expected authority. Verify target
+  and relation after connecting to the specified entry. Contact failure means unavailable
+  or partial results, never fact deletion or authority transfer. (A5, A7; D8, D10)
+- An owner transition accepted through D12 continuity evidence preserves ElementUUID.
+  Persistently fence the old writer before enabling the new one. Explicit unavailable windows
+  are allowed; shadow objects, dual write, and simultaneous visibility are not.
+  (A2, A7, A10; D12)
+- Reanchor changes Structure/Pose, not ElementUUID. Cross-Core transition does not automatically
+  migrate or reuse Facet attachment acceptance. (D4, D6, D12)
 
-## 6. 当前产品组织
+## 6. Current product organization
 
-下表只是当前仓库的产品包装投影，不是公共协议、公理、未来必选模块或永恒模块数量。其他实现可以采用
-不同 package、进程与部署拆分，只要保持规范定义的事实 owner、控制边界和公共行为。（A1、A7、A10；D4–D12）
+This table describes repository packaging, not a public protocol, axiom, mandatory future module,
+or permanent module count. Other implementations may split packages, processes, and deployment
+differently while preserving normative owners, control boundaries, and public behavior.
+(A1, A7, A10; D4–D12)
 
-| 产品模块 | 当前包装角色 | 不能据此推出 |
+| Module | Current packaging role | Does not imply |
 |---|---|---|
-| `ucupa-core` | Core 空间事实的当前产品边界 | 一个固定进程、Store 或部署形态 |
-| `ucupa-facet` | exact opaque Facet content 的当前产品边界 | Element existence、schema 校验或 Core 空间副本 |
-| `ucupa-realm` | access-control／trust 的当前参考实现 | 空间自治或 Core／Facet ownership |
-| `ucupa-operator` | 部署意图与运维编排的候选包装 | 主基线已冻结其 API、状态或独立 owner |
-| `ucupa-archive` | 离线语义交换的候选包装 | 在线 authority、Store backup 或在线请求路径 |
+| `ucupa-core` | Core spatial facts | A fixed process, Store, or deployment shape |
+| `ucupa-facet` | Exact opaque Facet content | Element existence, schema validation, or copied Core space |
+| `ucupa-realm` | Reference access-control/trust implementation | Spatial autonomy or Core/Facet ownership |
+| `ucupa-operator` | Candidate deployment-intent and operations packaging | Frozen APIs, state, or an independent owner in the baseline |
+| `ucupa-archive` | Candidate offline semantic exchange | Online authority, Store backup, or an online request path |
 
-UCUPA 不再设置 Console 产品模块或内置可视化面板。面向人的浏览、管理和可视化属于外部客户端，
-按相关 owner 的公开操作与授权访问；UCUPA 保留自身的可编程操作、观察及诊断职责，
-不要求某个 UI 存在才能使用或运行，也不把原 Console 包装转移给 Operator。（A10；主基线第 9 节）
+UCUPA has no Console product or built-in visual panel. Human-facing browsing, administration,
+and visualization belong to external clients using public owner operations and authorization.
+UCUPA retains programmable operations, observation, and diagnostics; it needs no UI to run or
+be used, and Operator does not inherit the old Console packaging. (A10; mainline baseline §9)
 
-SDK、host、server、transport、Store adapter、index 与 conformance 工具不是新的产品真相 owner；
-按地址工作的 DNS／传输适配不构成 UCUPA Ref → 地址目录。
-模块同进程或跨进程部署都不能改变上述语义边界。（A1、A5、A7、A10）
+SDKs, hosts, servers, transports, Store adapters, indexes, and conformance tools are not new
+product truth owners. Address-based DNS/transport adapters do not constitute a UCUPA
+Ref-to-address directory. Co-located or separate processes do not change these semantic
+boundaries. (A1, A5, A7, A10)
 
-## 7. Greenfield 排除
+## 7. Greenfield exclusions
 
-- 不建立全局 World、裸 UUID locator、中央 Element／owner／Cluster directory、全局 Revision、全局事务或中央空间索引。（A1、A7、A10；D6、D9–D11）
-- 不把 Anchor tree、authority graph、Realm trust／permission、Route 和 Cluster topology 合成一棵树。（A7、A10；D6–D9）
-- 不把 WorldPose、结构地址、索引、query result、event、cursor 或 cache 提升为竞争真相。（A5、A9；D9–D11）
-- 不在 Core 中加入 scale、Collider、资产 bounds、LOD、渲染、高频物理或产品业务语义。（A3、A4、A10；D1–D4）
-- Metadata 与 displayName 均不属于当前 baseline；只有真实消费者和独立合同证明后才可作为可选能力进入，且不得成为身份、结构、空间查询、寻址、路由或授权的前提。（A2、A4、A8；D4、D9）
-- 不把文本名称、alias 或名称解析作为身份、寻址、授权或发现正确性的前提。（A2、A8；D9）
-- 不用 exact UUID Grant 代替未知发现授权；UpDepth 明确选择 Scope，不能用执行 hop 或 timeout 偷改该范围。（A8、A9；D7、D10）
-- 不用 mirrored truth、shadow Element、dual write、unreachability fencing 或跨 owner 原子承诺掩盖 transition。（A7、A10；D12）
-- 不为已删除原型保留版本后缀、旧 Store reader、转换器、迁移支线或兼容 facade。（基本公理第 4 节；主基线第 8 节）
-- 不把数据库、消息总线、Kubernetes、当前模块数量或任何当前实现机制写成空间真相。（A1、A5、A10；D8、D11、D12）
+- No global World, bare-UUID locator, central Element/owner/Cluster directory, global Revision,
+  global transaction, or central spatial index. (A1, A7, A10; D6, D9–D11)
+- Do not merge the Anchor tree, authority graph, Realm trust/permission, Route, and Cluster
+  topology into one tree. (A7, A10; D6–D9)
+- Do not promote WorldPose, structural addresses, indexes, query results, events, cursors,
+  or caches into competing truth. (A5, A9; D9–D11)
+- No scale, Collider, asset bounds, LOD, rendering, high-frequency physics, or product
+  business semantics in Core. (A3, A4, A10; D1–D4)
+- Metadata and displayName are outside the current baseline. Only a real consumer and
+  independent contract can justify them as optional capabilities; neither may become a
+  prerequisite for identity, structure, spatial queries, addressing, routing, or authorization.
+  (A2, A4, A8; D4, D9)
+- Text names, aliases, and name resolution are not prerequisites for correct identity,
+  addressing, authorization, or discovery. (A2, A8; D9)
+- Exact UUID Grants do not replace authorization for unknown discovery. UpDepth explicitly
+  selects Scope; execution hops or timeouts must not silently change it. (A8, A9; D7, D10)
+- Do not conceal transitions with mirrored truth, shadow Elements, dual write, unreachability
+  fencing, or cross-owner atomic promises. (A7, A10; D12)
+- No version suffixes, old Store readers, converters, migration branches, or compatibility
+  facades for removed prototypes. (Axioms §4; mainline baseline §8)
+- Databases, message buses, Kubernetes, present module counts, and implementation mechanisms
+  are not spatial truth. (A1, A5, A10; D8, D11, D12)
 
-## 8. 本投影的权威规则
+## 8. Authority rules for this overview
 
-1. 基本公理约束所有下游设计；主基线 D1–D12 是本文所有具体语义的唯一详细来源。
-2. 本文只做有损阅读投影，不接受、修改、补全或否决任何 UCUPA 语义。
-3. 本文与规范来源冲突时，以规范来源为准，并修正本文；不得反向解释规范以保留本文措辞。
-4. 本文没有引用来源的陈述不能作为 API、Store、wire、部署或实现决策依据。
-5. 任何后续实现合同必须声明覆盖的规范条款和公开反例门；“出现在 Platform 视图中”不构成代码授权。
-6. 接受或更新本投影仍不自动授权实现。
+1. Axioms constrain all downstream design; D1–D12 are the sole detailed source of this
+   overview's concrete semantics.
+2. This is a lossy reading projection. It accepts, changes, completes, or rejects no UCUPA rule.
+3. On conflict, the normative source prevails and this overview must be corrected. Do not
+   reinterpret the source to preserve wording here.
+4. Unsourced statements here cannot justify API, Store, wire, deployment, or implementation decisions.
+5. Every later implementation contract must identify the normative clauses it covers and
+   public counterexample gates. Appearing here does not authorize code.
+6. Accepting or updating this overview does not automatically authorize implementation.

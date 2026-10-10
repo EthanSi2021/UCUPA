@@ -1,13 +1,15 @@
-# Realm 网络服务产品进程
+# Realm network product host
 
-`go run ./cmd/ucupa-realm -init <bootstrap.json> -store <path>` 执行一次显式可信引导，
-按引导文件创建新的持久 Realm Store；`go run ./cmd/ucupa-realm -config <file>` 打开
-一份已经初始化的 Realm Store 并作为固定网络服务运行。程序不自动 seed 主体、不授予
-权限、不把缺失 Store 当成重开成功；`-init` 与 `-config` 互斥。初始化输出只报告
-RealmID，不输出任何凭据 secret。
+`go run ./cmd/ucupa-realm -init <bootstrap.json> -store <path>` performs one explicit trusted
+bootstrap and creates a new durable Realm Store.
+`go run ./cmd/ucupa-realm -config <file>` opens an initialized Store as a fixed network service.
+The program does not automatically seed Principals, grant permissions, or treat a missing Store
+as a successful reopen. `-init`/`-config` are mutually exclusive.
+Initialization prints RealmID only, never credential secrets.
 
-引导文件最多 64 KiB，主体、绑定、凭据各最多 256 项，未知字段拒绝；每种 scope 只接受
-本类的精确字段（facet 为 32 字节小写 hex，credential id／secret 分别为 16／32 字节小写 hex）：
+Bootstrap is at most 64 KiB, with up to 256 Principals, bindings, and credentials each.
+Unknown fields are rejected. Every scope kind accepts only its exact fields.
+Facet keys are 32-byte lowercase hex; credential ID/secret are 16/32-byte lowercase hex:
 
 ```json
 {
@@ -29,12 +31,14 @@ RealmID，不输出任何凭据 secret。
 }
 ```
 
-scope kind 取值：`core_element`／`facet_element`／`anchor_closure`（authority＋element）、
-`facet_key`（authority＋element＋facet）、`realm`、`authority`。绑定 subject 的 realm 必须
-等于 realm_id，且主体已注册；凭据 audience 必须等于 realm_id。这是引导文件，不是远程
-权限管理接口——服务运行后修改绑定仍走原 Realm 管理 API。
+Scope kinds are `core_element`/`facet_element`/`anchor_closure` (authority+element),
+`facet_key` (authority+element+facet), `realm`, and `authority`.
+Binding subject realm must equal realm_id and the Principal must be registered.
+Credential audience must equal realm_id. This is a bootstrap file, not remote permission
+administration; running-service binding changes use the original Realm administration API.
 
-运行配置（路径与身份必须换成实际值；所有运行期限与容量显式填写，无零值默认）：
+Replace runtime paths/identities with actual values and explicitly fill every duration/capacity;
+zero values supply no defaults:
 
 ```json
 {
@@ -68,17 +72,18 @@ scope kind 取值：`core_element`／`facet_element`／`anchor_closure`（author
 }
 ```
 
-`realm_id` 必须与实际打开 Store 的身份一致，不一致拒绝启动。`handle_ttl`／
-`challenge_ttl` 必须为整秒，`connection_lifetime` 不得小于 `rpc_deadline`。
-`admitted_services` 把每个服务客户端证书 SPKI 绑定到唯一事实 owner：mTLS 接入资格
-与用户对事实的权限分别判断，未获绑定的服务无法建立身份或授权。客户端根证书为
-单个显式 PEM 束（最多 256 KiB），空或不肯解析的信任集直接拒绝。
+`realm_id` must match the actual Store or startup fails.
+`handle_ttl`/`challenge_ttl` use whole seconds; `connection_lifetime` cannot be shorter
+than `rpc_deadline`. `admitted_services` binds every client certificate SPKI to one fact owner.
+mTLS service admission and user fact permission are separate: an unbound service cannot
+establish callers or obtain authorization. Client roots are one explicit PEM bundle, at most
+256 KiB; empty/unparseable trust fails.
 
-`foreign` 为可选段：缺失时 foreign 身份建立端口保持 fail-closed，
-`EstablishForeignCaller` 一律返回不可用；出现则必须完整，否则拒绝启动。每个受信
-issuer 声明签名公钥（PEM ed25519）、钉住的 issuer Core 连接（`next_hop`＋
-`expected_core`＋`ca_file`＋`spki_sha256` 小写 hex）与本服务在该 Core 侧的
-delegation 身份（`verifier`）：
+Optional `foreign` controls foreign identity establishment. Without it,
+`EstablishForeignCaller` always returns unavailable, fail-closed.
+If present it must be complete or startup fails. Each trusted issuer supplies an Ed25519 PEM
+signing public key, pinned issuer Core (`next_hop`, `expected_core`, `ca_file`,
+lowercase-hex `spki_sha256`), and this service's delegation identity at that Core (`verifier`):
 
 ```json
 {
@@ -98,42 +103,47 @@ delegation 身份（`verifier`）：
 }
 ```
 
-在线活性回查复用网络访问合同的既有 P6 proof 检查：receiver 用自己的服务证书
-（须兼含 clientAuth EKU）连 issuer Core，issuer 侧 read_delegation 钉住该证书 SPKI
-并映射到 `verifier` 身份。issuer 明确拒绝 proof 报告为未认证，issuer 不可达或
-核对无法完成报告为不可用——没有本地或离线放行，proof 与 challenge 寿命也不延长。
-最多 256 个受信 issuer；跨产品进程证据见
-`acceptance/realm_foreign_process_test.go`。
+Online liveness reuses the network contract's existing P6 proof check.
+The receiver connects to issuer Core with its own service certificate, which must include
+clientAuth EKU. Issuer read_delegation pins that certificate's SPKI and maps it to `verifier`.
+Explicit proof rejection is unauthenticated; unreachable issuer or incomplete verification
+is unavailable. There is no local/offline Allow or extended proof/challenge lifetime.
+Up to 256 issuers are trusted. Cross-product evidence is in
+`acceptance/realm_foreign_process_test.go`.
 
-`EstablishForeignCaller.actor` 是 P6 原签名绑定的接力 Core，由接收 Core 核验服务身份后传入；
-不能将它与接收服务 owner 混为一谈。Realm 按该 actor 核对签名；接收 owner 仍来自 mTLS 的
-`admitted_services`，challenge 与结果句柄仍绑定接收 owner。缺 actor 或与签名不符即拒绝，
-不支持旧消息回退或仅按自报主体建立身份。
+`EstablishForeignCaller.actor` is the relay Core bound by the original P6 signature,
+supplied after the receiving Core authenticates service identity. It is not the receiving
+service owner. Realm checks the signature against actor; mTLS `admitted_services` still
+determines the receiver owner, which binds challenge/result handle.
+Missing actor or signature mismatch is rejected. No old-message fallback or self-reported
+Principal establishment is accepted.
 
-服务端句柄是有限运行内引用：绑定 RealmID、本次运行、接收 owner 与原 caller，
-不跨 owner／caller／Realm／运行复用，不持久化；Realm 重启后旧句柄全部失效。
-每次操作都在线核验，句柄不是可离线兑现的 Allow。
+Service handles are finite run-local references bound to RealmID, run, receiver owner,
+and original caller. They cannot cross owner/caller/Realm/run, are not persisted, and all
+expire on Realm restart. Every operation verifies online; a handle is not offline Allow.
 
-SDK 侧目标核验是发送凭据的先决条件：`CheckTarget` 通过前，客户端不发送用户
-凭据或受保护授权正文；核验失败、未核验或连接重建后的旧通过结果都不放行。
+SDK target verification precedes credentials. Before `CheckTarget` succeeds, no user
+credential or protected authorization body is sent. Missing/failed verification or a prior
+success on a rebuilt connection cannot authorize sending.
 
-### 验证
+### Verification
 
-验证独立产品进程的启停、身份保持与旧运行句柄失效：
+Independent product startup/shutdown, identity, and run-local handle tests:
 
 ```powershell
 go test ./cmd/ucupa-realm -count=1 -v
 ```
 
-测试构建真实产品二进制并经实际 TCP/TLS 走 SDK 全链：引导、重复引导拒绝、
-CheckTarget、身份建立、view 核验、强杀重启后 RealmID 保持、旧 caller／view 失效、
-新身份正常工作，以及未配置 foreign 时 `EstablishForeignCaller` 保持 fail-closed。
+Tests build the actual product binary and exercise SDK over TCP/TLS: bootstrap, duplicate
+bootstrap refusal, CheckTarget, caller establishment, view checks, RealmID after forced
+restart, invalid old caller/view, valid fresh caller, and fail-closed
+`EstablishForeignCaller` without foreign configuration.
 
-跨产品进程的 foreign 身份链（一个 ucupa-core issuer 与一个 ucupa-realm receiver）：
+Foreign identity across one ucupa-core issuer and one ucupa-realm receiver:
 
 ```powershell
 go test ./acceptance -run TestRealmProductForeignIdentityAcrossProcesses -count=1 -v
 ```
 
-loopback 测试不等于真实跨机器或生产部署验证；全仓交付仍用
-`go run ./cmd/verify`。
+Loopback is not real multi-machine or production validation.
+Full repository delivery still requires `go run ./cmd/verify`.

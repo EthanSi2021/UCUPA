@@ -175,3 +175,27 @@ commit, push, and publication are distinct states.
 Operator, Archive, deployment automation, performance/capacity work, HA, multi-region operation,
 dynamic partitioning, and scale work require a concrete scenario, a bounded contract, and
 separate authorization. There is no automatically scheduled next phase or revived Console.
+
+## 9. English documentation: first batch
+
+On 2026-10-10, the first documentation-only batch translates the Core and Facet module/API
+READMEs, all three product-host READMEs, PLATFORM, ENGINEERING, and AGENTS into English.
+The Realm module README was already English and is unchanged. The ten translated documents
+and this progress record are the only changed files above the published baseline.
+
+Configuration fields and values, executable commands, permission names, Store markers,
+resource limits, dependency boundaries, and engineering ceilings are preserved. Stale progress
+wording is aligned with accepted delivery and actual tests, while local, loopback, and bounded
+network evidence remain explicitly qualified. Historical engineering increments are retained
+as history, not new capacity allowances.
+
+Documentation checks passed: 287 local links and anchors, 22 configuration/command blocks,
+diff whitespace, and byte preservation of every non-documentation file. The original private
+development workspace is unchanged. On Windows, `go run ./cmd/verify -checks-only` reported
+0 errors and 0 responsibility reviews; runtime gates were not rerun for these prose-only edits.
+
+The Chinese axioms and domain contracts remain unchanged and authoritative. Their English
+translation is a separate second batch, not an implied change of semantics or authority.
+The user has authorized a local commit of this first batch, followed by the second batch.
+Git records the actual commit state. No push is authorized in this step; the second batch
+remains documentation-only and must preserve the accepted semantics and implementation scope.

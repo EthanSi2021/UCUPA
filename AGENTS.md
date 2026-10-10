@@ -1,101 +1,150 @@
-# UCUPA Agent 工作规范
+# UCUPA agent instructions
 
-本文件是整个 `ucupa` 的长期 agent 工作入口，适用于设计、实现、测试、审查和交付。
-它规定工作方式，不定义领域语义，不替代工程规范，也不记录当前阶段、进度或任务授权。
-UCUPA 是独立基础设施；下游应用的业务需求不能未经设计确认就成为 UCUPA 的公共职责。
+This is the long-term agent entry point for the entire `ucupa` repository: design,
+implementation, testing, review, and delivery. It defines working practices, not domain
+semantics, engineering rules, current phase, progress, or task authorization.
+UCUPA is independent infrastructure. A downstream application's business requirements must
+not become public UCUPA responsibilities without a confirmed design.
 
-## 1. 依据与阅读入口
+## 1. Sources and reading order
 
-- [架构权威清单](docs/architecture/README.md)：识别有效规范、合同、证据与历史材料。
-- [开发计划](docs/architecture/development-plan.md)：当前任务、执行顺序、完成条件与接手信息。
-- [工程组织规范](ENGINEERING.md)：目录、依赖、公开边界、文件拆分和工程检查规则。
-- [运行说明](RUN.md)：构建、工具链、验证入口和实际运行方式。
+- [Architecture authority manifest](docs/architecture/README.md): effective specifications,
+  contracts, evidence, and historical material.
+- [Development plan](docs/architecture/development-plan.md): current work, sequence,
+  completion gates, and handoff information.
+- [Engineering rules](ENGINEERING.md): directories, dependencies, public boundaries,
+  file organization, and engineering checks.
+- [Run guide](RUN.md): builds, tools, verification, and actual operation.
 
-按任务读取相关文档与章节；接续开发先确认计划的当前状态和对应切片，再读取适用规范、合同与源码。
-不要求为局部文档、注释或措辞修改通读全部计划和工程规范；但不得跳过实际影响的约束，也不能仅凭聊天摘要实施。
-架构文档的效力与优先级只由权威清单说明，本文件不建立另一套顺序。
-目标设计、当前实现、候选方案与历史证据必须区分；设计已确认不代表代码已经实现。
-发现冲突时，先核对文档状态、代码与测试，判断是待实现差距、过时记录还是实现缺陷。
-不得静默选择方便的一边；若解决冲突需要改变已确认行为或扩大范围，先报告依据并请求决策。
+Read the documents and sections relevant to the task. When resuming development, first
+confirm the plan's current status and slice, then read the applicable specifications,
+contracts, and source. A local documentation, comment, or wording edit does not require
+reading the entire plan and engineering specification, but do not skip affected constraints
+or implement from a chat summary alone.
 
-## 2. 开工与恢复
+Only the authority manifest defines document precedence; this file creates no second order.
+Distinguish accepted design, current implementation, candidates, and historical evidence.
+An accepted design is not proof of implementation. When sources conflict, check document
+status, code, and tests to distinguish an implementation gap, stale record, or defect.
+Do not silently choose the convenient interpretation. If resolving the conflict changes
+accepted behavior or expands scope, report the evidence and request a decision.
 
-- 在本文件所在的 `ucupa` 仓库根目录开启项目任务并执行仓库级命令，不把上层工作区当成本仓库。
-  若任务从上层工作区接手，先定位本仓库并显式读取本文件，不假定子目录指引已经自动加载。
-- 确认仓库位置、分支、HEAD、暂存区、未提交修改和未跟踪文件，再确定本次工作基线。
-- 从用户当前请求与计划确认目标、授权范围、完成条件和明确不做的事项。
-- 核对已完成内容、剩余工作及最近验证对应的文件状态；中断前的进展不是完成证明。
-- 现有改动属于工作基线，不得默认用 HEAD 覆盖；不擅自删除、回退、暂存或清理无关内容。
-- 发现其他任务正在修改重叠文件时，先协调归属，不覆盖对方工作，也不在竞争写入中验收。
-- 切换 checkout 或向其他 agent 交接时，确认未提交及未跟踪成果完整保留，不能只传提交号。
+## 2. Starting and resuming work
 
-在已授权范围内按明确的下一步推进，不反复重开已经确认的设计；发现实质阻塞时说明证据和影响。
+- Work and run repository-wide commands from the `ucupa` root containing this file, not
+  the parent workspace. If handed off from the parent, locate this repository and explicitly
+  read this file; do not assume nested instructions were loaded automatically.
+- Confirm repository, branch, HEAD, staging, uncommitted changes, and untracked files before
+  choosing the working baseline.
+- Derive the objective, authorization, completion conditions, and exclusions from the
+  current user request and plan.
+- Check completed and remaining work and the exact file state covered by recent validation.
+  Progress before an interruption is not completion evidence.
+- Existing changes belong to the working baseline. Do not replace them with HEAD or delete,
+  revert, stage, or clean unrelated work.
+- If another task is editing overlapping files, coordinate ownership first. Do not overwrite
+  its changes or accept work while competing writes continue.
+- When changing checkout or handing work to another agent, preserve uncommitted and untracked
+  results in full; a commit hash alone is insufficient.
 
-## 3. 工程责任与授权
+Within authorization, follow the confirmed next step without repeatedly reopening accepted
+design decisions. Report evidence and impact when a substantive blocker appears.
 
-agent 负责普通工程研究、方案推荐、命名、拆分粒度、实现顺序、测试与技术审查。
-不要把常规技术选择推给用户，也不要让用户代替工程师检查技术正确性。
-用户决定产品目标、工作范围，以及影响功能、调用方式、安全、可用性或成本的实质取舍。
-需要用户决策时，先给出推荐、依据与影响，而不是罗列无优先级的选项。
+## 3. Engineering responsibility and authorization
 
-- 解释、审查和状态查询不授权修改；设计讨论不自动授权代码实现。
-- 授权一个切片不自动授权后续阶段、额外模块或另起一轮重构。
-- 提交、推送及破坏性操作必须有对应授权；已有明确授权不反复索要确认。
-- 在授权范围内完成必要的实现、验证和收尾；如需新增权限或扩大范围，先停在该边界说明问题。
+The agent owns routine engineering research, recommendations, naming, decomposition,
+implementation order, testing, and technical review. Do not ask the user to choose ordinary
+technical details or perform the engineer's correctness checks.
 
-## 4. 实现纪律
+The user decides product objectives, scope, and consequential tradeoffs affecting behavior,
+calling conventions, security, availability, or cost. When a user decision is needed, lead
+with a recommendation, evidence, and impact, not an unranked list of options.
 
-目录、依赖和规模门槛遵循工程规范，不在本文件复制具体目录树或数量限制。
+- Explanations, reviews, and status requests do not authorize edits; design discussion does
+  not automatically authorize implementation.
+- Authorization for one slice does not authorize later phases, extra modules, or another
+  refactoring round.
+- Commits, pushes, and destructive operations require corresponding authorization. Do not
+  request it again when it is already explicit.
+- Complete necessary implementation, validation, and cleanup within scope. If additional
+  authority or scope is required, stop at that boundary and explain why.
 
-- 新增文件或包前先确认职责、事实所有权、依赖方向与真实消费者，不按操作步骤机械拆包。
-- 同一逻辑 owner 的正式状态、提交和恢复机制保持唯一；不得为目录整齐复制状态、规则或整套模型。
-- Greenfield：遵循已确认的唯一接口与实现，不擅加旧路径兼容、双入口、旧协议回退或未来占位抽象。
-- Greenfield 不授权静默改变行为；结构整理、公开接口调整与业务语义修订须分别说明并验证。
-- 私有实现不因迁移方便而公开；源码与生成物分清，生成规则和工具入口按运行说明执行。
-- 同步实际消费者、测试和必要文档；清除本次修改造成的无用实现，不扩大到无关清理。
-- 不以删除反例、跳过失败测试、放宽依赖规则或抬高规模门槛掩盖缺陷。
-  确需调整工程规则时，单独给出职责与依赖证据，按工程规范审查。
-- 不引入未授权的产品依赖、外部服务或持久化语义变更；日志与交付材料不暴露凭据或秘密。
+## 4. Implementation discipline
 
-## 5. 验证与交付
+Follow the engineering rules for directories, dependencies, and size limits; do not duplicate
+their directory trees or numeric thresholds here.
 
-开发中按修改风险运行定向测试和工程检查；修复缺陷时补能证明原问题的反例。
-代码交付前，在仓库根目录对最终文件集合执行完整验证：
+- Before adding a file or package, identify responsibility, fact ownership, dependency
+  direction, and real consumers. Do not decompose mechanically by operation step.
+- Keep one authoritative state, commit path, and recovery mechanism per logical owner.
+  Do not duplicate state, rules, or whole models to make directories look tidy.
+- Greenfield: use the accepted single interface and implementation. Do not add old import
+  compatibility, parallel entry points, protocol fallbacks, or speculative placeholder abstractions.
+- Greenfield does not permit silent behavior changes. Explain and validate structural,
+  public-interface, and domain-semantic changes separately.
+- Do not expose private implementation merely to ease relocation. Separate source from
+  generated output and follow the run guide's generation rules.
+- Update real consumers, tests, and necessary documentation. Remove code made obsolete by
+  this change without expanding into unrelated cleanup.
+- Do not hide defects by deleting counterexamples, skipping failing tests, relaxing
+  dependency rules, or raising size limits. If an engineering rule genuinely needs revision,
+  provide separate responsibility and dependency evidence and follow its review procedure.
+- Add no unauthorized product dependency, external service, or persistence-semantic change.
+  Logs and delivery material must not expose credentials or secrets.
+
+## 5. Validation and delivery
+
+During development, run targeted tests and engineering checks proportional to risk.
+When fixing a defect, add a counterexample that demonstrates the original problem.
+Before code delivery, run the full command at the repository root on the final file set:
 
 ```text
 go run ./cmd/verify
 ```
 
-`go run ./cmd/verify -checks-only` 只是工程检查，不包含完整运行验证，不能代替交付门。
-工具链和环境要求以运行说明为准；缺少工具或验证未运行时，明确报告，不得算作通过。
-完整验证期间固定交付文件集合；若之后又改了代码、协议或影响结果的配置，交付前须对最终集合重跑完整验证。
-记录命令、结果、验证环境与对应基线；旧提交或另一份工作区的绿色结果不能证明当前改动正确。
-重构还须检查行为、公开面及存储／恢复规则是否保持，不能只以编译通过或文件数变化验收。
+`go run ./cmd/verify -checks-only` checks engineering constraints, not the full runtime gate.
+Tool and environment requirements are defined in the run guide. Report missing tools or
+unrun validation explicitly; neither counts as a pass.
 
-纯文档修改按风险检查内容一致性、引用、链接和差异；无需借此宣称重新完成代码或运行验收。
-交付应简洁说明改了什么、验证了什么、未覆盖什么以及是否存在阻塞。
-设计确认、实现完成、验证通过、用户接受、提交、推送分别记录，不能互相代替。
-只声明实际验证环境内的能力，不把本地模拟扩大为真实多机、生产或规模验证。
+Freeze the delivery files during full verification. If code, protocol, or result-affecting
+configuration changes afterward, rerun the full gate on the final set before delivery.
+Record command, outcome, environment, and baseline. A green run on an older commit or another
+workspace does not validate current changes. For refactoring, verify behavior, public surface,
+and storage/recovery rules, not just compilation or file counts.
 
-## 6. 协作与交接
+For documentation-only edits, check content consistency, references, links, and diff as
+appropriate; do not claim a fresh code or runtime acceptance. Briefly state changes,
+verification, uncovered scope, and blockers. Record design confirmation, implementation,
+verification, user acceptance, commit, and push separately.
 
-获得协作授权时再分派子任务，不因存在工具就自动启动其他 agent。
-每个子任务应有明确目标、允许修改的文件或职责、不可改变的边界和可验证的交付条件。
-优先分派可独立完成的有限任务；共享状态、事务或接口变更由主任务统一协调，避免交叉写入。
-主任务负责整合、审查和最终验证，不能仅凭子任务的完成消息宣告交付。
+Claim only capabilities demonstrated in the actual validation environment. Do not promote
+local simulation into real multi-host, production, or scale validation.
 
-中断或交接前，在现有计划的当前进度处维护接手摘要：
+## 6. Collaboration and handoff
 
-- 目标、已完成与未完成事项，以及下一步对应的合同、源码和测试入口；
-- 分支／提交与未提交基线、未跟踪成果、文件归属和仍在进行的工作；
-- 最近验证的命令、结果、覆盖范围、未验证项与具体阻塞；
-- 授权边界、不得改变的不变量，以及明确的完成条件。
+Delegate only with collaboration authorization, not merely because tools exist.
+Every subtask needs an explicit objective, permitted files or responsibilities, immutable
+boundaries, and verifiable completion conditions. Prefer independent bounded tasks.
+The main task coordinates shared state, transactions, and interface changes to avoid
+overlapping writes, and owns integration, review, and final verification. A subtask's completion
+message alone is not delivery evidence.
 
-动态任务信息只保留一个现行入口；不复制成多份并行计划，也不写入本文件。
-接手者必须重新核对工作区与证据，不能把交接摘要当成未经验证的完成证明。
+Before interruption or handoff, update the current progress section in the existing plan with:
 
-## 7. 本文件的维护边界
+- Objective, completed and remaining work, and the next contract, source, and test entry points.
+- Branch/commit, uncommitted baseline, untracked results, ownership, and active work.
+- Latest verification command, result, scope, unverified items, and concrete blockers.
+- Authorization boundaries, immutable invariants, and explicit completion conditions.
 
-只有长期工作方式改变时才修改本文件；阶段切换和实施进展更新开发计划。
-不记录阶段待办、提交哈希、临时故障、当前文件数量、验证流水、固定模型或子任务名单。
-先保留一份根级指引，不为目录对称铺设重复的模块级指引；确有局部差异时再限定范围补充。
+Keep one current entry for dynamic task information. Do not copy it into parallel plans or
+this file. A receiving agent must recheck the workspace and evidence rather than accept
+the handoff summary as unverified completion proof.
+
+## 7. Maintaining this file
+
+Edit this file only when long-term working practices change; update the development plan
+for phase and progress changes. Do not add phase-specific tasks, commit hashes, temporary
+failures, file counts, validation logs, fixed models, or subtask lists.
+
+Keep one root-level instruction file. Do not create repeated module instructions for directory
+symmetry; add narrowly scoped instructions only for a demonstrated local difference.

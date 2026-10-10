@@ -1,203 +1,242 @@
 # UCUPA Core
 
-Core 是 Element 空间真相的唯一 owner：它持久化稳定 UUID、Kind、局部位姿、
-Range、Anchor 结构、Element Revision 与 owner-local read cut。Facet 之外的业务属性、
-身份和权限决策都不属于 Core。
+Core is the sole owner of Element spatial truth: stable UUIDs, Kind, local poses, Range,
+Anchor structure, Element Revision, and owner-local read cuts. Application properties,
+identity establishment, and permission decisions do not belong to Core.
 
-本目录实现[《Core 本地空间真相实现合同》](../docs/architecture/core-local-spatial-truth.md)。G1 与显式 Range 更新
-修订均已通过验证和验收；后续执行状态见[开发计划](../docs/architecture/development-plan.md)。
-本目录还实现[本地查询合同](../docs/architecture/core-local-query.md)对应的 QueryRegion，
-其 P3 修订已通过完整验证并经用户接受，证据以开发计划为准。
-其 current 分类只由[架构权威清单](../docs/architecture/README.md)维护。
-Stage 1 · Phase 1 的最小基础已实现并验证：Core 稳定身份、owner-qualified scope 与提交历史。
-相关证明见[基础测试](tests/instance/foundation_test.go)。P2 挂载控制增量按
-[双 Core 挂载合同](../docs/architecture/core-mount-contract.md)实现，交付／验收状态由开发计划维护；
-P3 新增启动配置、临时读取上下文及跨 Core 读取面也已完成实现、完整验证并经用户接受。
-验收限于合同声明的可信本地双 Core，不表示网络、嵌套或完整开放联邦已完成。
+The implementation follows the [local spatial truth contract](../docs/architecture/core-local-spatial-truth.md)
+and [local query contract](../docs/architecture/core-local-query.md). G1, explicit Range updates,
+and P3 were verified and accepted. Stage 1's foundation includes stable Core identity,
+owner-qualified scopes, and commit history; see the [foundation tests](tests/instance/foundation_test.go).
+The P2 [mount contract](../docs/architecture/core-mount-contract.md) defines trusted local
+two-Core control; P3 adds startup configuration, temporary read contexts, and cross-Core reads.
+Those local profiles alone do not establish network, nested, or open federation support.
+The [authority manifest](../docs/architecture/README.md) classifies current contracts;
+the [development plan](../docs/architecture/development-plan.md) records accepted implementation
+and validation scope, including later network and lifecycle increments.
 
-## 代码组织
+## Code organization
 
-Core、Facet 按同一份[工程组织规范](../ENGINEERING.md)归位；模块根只作导航，
-不保留旧 Go 包、类型别名或逐方法转发。迁移清单、固定 Store 证据及完整验收状态
-统一见[开发计划](../docs/architecture/development-plan.md)，不在 README 维护第二份施工日志。
+Core and Facet follow the same [engineering rules](../ENGINEERING.md).
+The module root is navigation only, without an old Go package, type aliases, or per-method
+forwarders. Read the plan for migration and fixed-Store evidence and delivery status;
+this README is not a second implementation journal.
 
-| 入口／职责 | 实际位置 |
+| Entry/responsibility | Location |
 |---|---|
-| 创建、打开与关闭；取得本地操作入口 | [instance](instance/instance.go) |
-| 公开参数、结果和 opaque 值；Connected/Federation 主题合同 | [contract](contract/spatial.go)、[connected](contract/connected/connected.go)、[federation](contract/federation/federation.go) |
-| `c.Elements()`：元素创建、读写、投影与公开变更 | [element](internal/element/operation.go) |
-| `c.Queries()`：本地查询、快照、续页与回收 | [query](internal/query/operation.go) |
-| `c.Connected()`：可信本地跨 Core 查询 | [connected](internal/query/connected/operation.go) |
-| `c.Mounts()`：挂载、对端接纳、地址维护和恢复 | [mount](internal/mount/operation.go) |
-| `c.Facets()`：Core 侧 Facet 联系与控制 | [facet](internal/facet/operation.go) |
-| `c.Writer()`：同原始 Store 的单写交接控制 | [handoff](internal/handoff/operation.go) |
-| `c.Transfers()`：源端控制与恢复；父侧 carrier 控制及无外部边的三方本地恢复；尚非完整转移驱动 | [source](internal/transfer/operation.go)、[carrier](internal/transfer/carrier.go)、[carrier recovery](internal/transfer/carrier_recover.go) |
-| `c.Access()`：公共请求封套 | [access/entry](internal/access/entry/request.go) |
-| `c.Federation()`：有限来源读取与披露 | [federation/source](internal/query/federation/source/operation.go) |
-| 同一事实聚合、候选提交、历史、发布与不确定结果恢复 | [commit](internal/commit/owner.go) |
-| 现有数据库字节格式、写事务准备与资源生命周期 | [store](internal/store/transaction.go) |
-| Element／关系的有限存储值编码；不持有数据库或正式状态 | [store/record](internal/store/record/element.go) |
-| 转移 journal、清单与接续证据的唯一规范编码；不负责提交 | [transfer/encoding](internal/transfer/encoding/journal.go) |
-| 公共上下文、观察与退休计量；不另存事实 | [registry](internal/access/registry/registry.go) |
-| gRPC 配置、注册和网络宿主；实际 RPC 分组在通信私有包 | [transport/grpc](transport/grpc/server.go)、[entry](transport/grpc/internal/entry/service.go)、[admission](transport/grpc/internal/admission/service.go) |
-| 指定地址的出站挂载／联邦连接；消费侧客户端 | [mountconn](transport/grpc/mountconn/mount_connections.go)、[federationconn](transport/grpc/federationconn/federation_connections.go)、[SDK](sdk/go/client.go) |
+| Construct, open, close, and obtain local operations | [instance](instance/instance.go) |
+| Public inputs, results, opaque values; connected/federation contracts | [contract](contract/spatial.go), [connected](contract/connected/connected.go), [federation](contract/federation/federation.go) |
+| `c.Elements()`: creation, reads, writes, projection, public mutations | [element](internal/element/operation.go) |
+| `c.Queries()`: local queries, snapshots, pagination, release | [query](internal/query/operation.go) |
+| `c.Connected()`: trusted local cross-Core queries | [connected](internal/query/connected/operation.go) |
+| `c.Mounts()`: mount control, peer acceptance, contact maintenance, recovery | [mount](internal/mount/operation.go) |
+| `c.Facets()`: Core-side Facet contacts and control | [facet](internal/facet/operation.go) |
+| `c.Writer()`: single-writer handoff on the original Store | [handoff](internal/handoff/operation.go) |
+| `c.Transfers()`: source control/recovery and parent-side carrier control/recovery within supported profiles | [source](internal/transfer/operation.go), [carrier](internal/transfer/carrier.go), [carrier recovery](internal/transfer/carrier_recover.go) |
+| `c.Access()`: public request envelope | [access/entry](internal/access/entry/request.go) |
+| `c.Federation()`: bounded source reads and disclosure | [federation/source](internal/query/federation/source/operation.go) |
+| One fact aggregate, candidate commits, history, publication, uncertain-result recovery | [commit](internal/commit/owner.go) |
+| Database byte format, write preparation, resource lifecycle | [store](internal/store/transaction.go) |
+| Bounded Element/relation storage-value codecs, without database or authoritative state | [store/record](internal/store/record/element.go) |
+| Canonical transfer journal, manifest, and continuity evidence codecs, without commits | [transfer/encoding](internal/transfer/encoding/journal.go) |
+| Public context, observation, and retirement accounting, without duplicate facts | [registry](internal/access/registry/registry.go) |
+| gRPC configuration, registration, host; actual RPC groups in transport-private packages | [transport/grpc](transport/grpc/server.go), [entry](transport/grpc/internal/entry/service.go), [admission](transport/grpc/internal/admission/service.go) |
+| Specified-address outbound mount/federation connections; consumer clients | [mountconn](transport/grpc/mountconn/mount_connections.go), [federationconn](transport/grpc/federationconn/federation_connections.go), [SDK](sdk/go/client.go) |
 
-实例返回真实操作，不复制整套业务方法。空间、挂载、Facet 联系共同使用唯一提交 owner；
-快照、访问资源、网络准入与客户端连接按各自原有生命周期管理，不变成第二份空间真相。
-`c.Access().PublicCall(...)` 是本地公共封套，网络适配仍独立核对身份、caller、联系及响应。
+The instance returns actual operations rather than duplicating their methods. Spatial, mount,
+and Facet-contact operations share one commit owner. Snapshots, access resources, admission,
+and client connections retain their own lifecycles without becoming second spatial truth.
+`c.Access().PublicCall(...)` is the local public envelope; network adapters independently
+check identity, caller, contacts, and responses.
 
-协议源和字段约束见 [api](api/README.md)，生成表示在 `bindings/go/protobuf`；
-独立宿主见 [cmd/ucupa-core](../cmd/ucupa-core/README.md)。
-测试跟随实际 owner；[公开组合测试](tests/instance/foundation_test.go)使用真实实例和合同，
-故障注入仅存在于相应 owner 的测试构建。单包通过或根目录清空不代替完整验收。
+Protocol sources and field constraints are in [api](api/README.md); generated representations
+are in `bindings/go/protobuf`. The independent host is [cmd/ucupa-core](../cmd/ucupa-core/README.md).
+Tests follow the actual owner. [Public composition tests](tests/instance/foundation_test.go)
+use real instances/contracts, and fault injection exists only in the relevant owner's test
+build. A passing package or empty module root is not full acceptance.
 
-## 本地真相模型
+## Local truth model
 
-- 一个 Core 可以为空；本地 CreateRoot 建立唯一且不可更新、移动或删除的 root。
-  P2 也允许空 Core 经明确挂载接纳成为外部父形态，此时不再创建本地 root。
-- root 没有 parent 和 LocalPose，独占 UNBOUNDED_ROOT。
-- 非 root Anchor 与 Entity 都原子保存
-  parent Anchor + LocalPose + BOUNDED_SPHERE Range。
-- Anchor 组成无环树；Entity 由一个 Anchor 直接容纳。
-- UUID 在 delete 后永久保留 claim，不能跨 Kind 或跨生命周期复用。
-- 非 root Anchor 与 Entity 的 Range 均可由调用方显式保持、扩大或缩小。所有最终 tuple
-  必须被直接 parent 精确包含；Anchor 还必须覆盖全部直接子 Element，否则原子拒绝。
-- 不自动调整祖先或子元素；Range 是保守覆盖，不要求等于最小包围球。
+- A Core may be empty. CreateRoot establishes one local root that cannot be updated, moved,
+  or deleted. An empty Core may instead accept an external-parent mount under P2 and then
+  must not create a local root.
+- A root has no parent or LocalPose and exclusively uses UNBOUNDED_ROOT.
+- Every non-root Anchor/Entity atomically stores parent Anchor, LocalPose, and
+  BOUNDED_SPHERE Range.
+- Anchors form an acyclic tree; an Entity has one direct parent Anchor.
+- UUID claims survive deletion permanently and cannot be reused across Kind or lifecycle.
+- Callers may explicitly preserve, enlarge, or shrink non-root Anchor/Entity Range.
+  The direct parent must exactly contain the final tuple. An Anchor must also cover all
+  direct children; violations are atomically rejected.
+- No automatic ancestor/child adjustment occurs. Range is conservative coverage, not
+  necessarily the minimum enclosing sphere.
 
-空间数值采用唯一 binary64/projective-quaternion profile。Store 只保存 canonical
-表示；包含、SE(3) 组合、QueryRegion 与私有相交 oracle 使用 exact rational 计算。公开
-ProjectToAncestor 只在最终 Pose 边界舍入，不保存 WorldPose。
+Spatial numbers use one binary64/projective-quaternion profile. The Store holds canonical
+representations. Containment, SE(3) composition, QueryRegion, and the private intersection
+oracle use exact rational computation. Public ProjectToAncestor rounds only at the final Pose
+boundary and does not persist WorldPose.
 
-## owner-local 行为
+## Owner-local operations
 
-Element 写面是 create、update 和非级联 delete。每次 update/delete 都使用 Element
-Revision CAS；每个真正的 Element commit 同时产生新的 subject Revision 和 CoreReadCut。
-完全相同的 update 返回 UNCHANGED，不推进任何 token。
+Element writes are create, update, and non-cascading delete. Update/delete use Element Revision
+CAS. Every actual Element commit produces a subject Revision and CoreReadCut; identical
+updates return UNCHANGED without advancing tokens.
 
-ReadElement 是当前 owner-local exact record read。ListDirect 在同一 cut 上按 UUID 完整分页
-列出直接 child Anchor 和 Entity；任一 fact mutation 会使旧 continuation 明确过期。
-ProjectToAncestor 在一个 cut 上读取并授权整条必要 parent path。
+ReadElement returns the current owner-local exact record. ListDirect paginates all direct
+child Anchors/Entities in UUID order at one cut; any fact mutation explicitly expires the old
+continuation. ProjectToAncestor reads and authorizes the required parent path at one cut.
 
-QueryRegion 从 StartAnchorID 按 UpDepth 选择实际 Scope：0 留在起始锚，正数最多上溯指定层数，
--1 上溯至已证明的根；小于 -1 非法。在实际 Scope 及全部后代中，以独立 Basis 为坐标参考
-执行只读球体相交查询，不限制向下深度。提升到共同祖先即可覆盖兄弟分支，Basis 不自动
-缩窄搜索范围。返回实际 Scope、实际上溯层数、UUID、Kind、Revision 及相对 Scope 的路径。
-每页完整扫描，以 UUID 排序分页；
-数值工作界缺口明确返回 Partial，不能解释为没有元素。limit 只限制输出条数，不限制扫描成本。
+QueryRegion selects Scope from StartAnchorID and UpDepth: 0 stays at the start, a positive
+value ascends at most that many levels, -1 ascends to a proven root, and values below -1 are
+invalid. It searches Scope and all descendants for sphere intersections using an independent
+Basis, without a downward depth limit. Selecting a common ancestor covers sibling branches;
+Basis does not narrow scope automatically. Results include actual Scope and ascent depth,
+UUID, Kind, Revision, and Scope-relative path. Each page performs a full scan and paginates
+in UUID order. Numerical work-limit gaps are Partial, not absence. The limit bounds returned
+items, not scan cost.
 
-New、CreateDurable、OpenDurable 都显式接收 Config。SnapshotRetention 不填即关闭旧状态保留，
-填入正时长才开启，没有默认保留秒数。关闭时仍可查询、分页，但依赖 cut 变化后明确重查；
-开启时后续页面固定同一旧视图，普通写入照常持久化，不延迟提交。需要完整记录时，
-CurrentVerified 用同 cut 的 ReadElement；Retained 用 ReadElementSnapshot，并独立核验 exact read 权限。
-快照有数量、逻辑字节及并发借用限制，到期、释放或关闭实例后不可续用，不偷偷转读最新状态。
+New, CreateDurable, and OpenDurable explicitly receive Config. Omitted SnapshotRetention
+disables old-state retention; a positive duration enables it, without a default.
+Queries and pagination still work when disabled but require a fresh query after cut changes.
+When enabled, subsequent pages retain the same old view and ordinary writes still commit
+durably without delay. For complete records, CurrentVerified uses same-cut ReadElement;
+Retained uses ReadElementSnapshot. Exact-read permission is checked independently.
+Snapshots have count, logical-byte, and concurrent-borrow limits. Expiry, release, or close
+ends reuse; no silent switch to current state occurs.
 
-每个 mutation 都携带 1..128 bytes 的 OperationID。相同 actor、operation kind、subject、
-适用的 canonical input 与 expected Revision 的重试，重放原始结果及原始 cut；同 ID 的
-不同绑定返回 `ErrOperationConflict`。成功、UNCHANGED、`ErrNotFound`、`ErrConflict` 和
-`ErrRevisionConflict` 均被保留。
+Every mutation has a 1..128-byte OperationID. Retries with the same actor, operation kind,
+subject, applicable canonical input, and expected Revision replay the original result/cut.
+Different bindings under that ID return `ErrOperationConflict`. Success, UNCHANGED,
+`ErrNotFound`, `ErrConflict`, and `ErrRevisionConflict` are retained.
 
-Core 用自身稳定身份构造 exact `CoreElementScope(CoreRef, ElementUUID)`，并按合同的披露顺序向 Authorizer 提交 exact all-of
-requirements：
+Core constructs exact `CoreElementScope(CoreRef, ElementUUID)` from its stable identity and
+submits exact all-of requirements to Authorizer in the contract's disclosure order:
 
-- create-root、create-Anchor、create-Entity；
-- exact read、ListDirect、exact Scope 的 QueryRegion；
-- update subject 与 place final parent；
-- delete Anchor、delete Entity。
+- Create root, Anchor, or Entity.
+- Exact read, ListDirect, and QueryRegion on the exact Scope.
+- Update subject and place in the final parent.
+- Delete Anchor or Entity.
 
-既有 Element 写入与 exact read／ListDirect 各使用一次 all-of 判断；`ProjectToAncestor` 先对 request 已知的 subject/ancestor
-做首轮 all-of，再对同一 provisional cut 解析出的完整 path 做一次 all-of，最后复核 cut。
-QueryRegion 对同一 exact Scope 在求值前后各授权一次，再复核 cut；整段查询许可不自动授予 exact read。
+Existing Element writes and exact read/ListDirect each use one all-of decision.
+`ProjectToAncestor` first authorizes the request-known subject/ancestor, then the full path
+resolved at the same provisional cut, and finally rechecks the cut.
+QueryRegion authorizes the exact Scope before and after evaluation, then rechecks the cut.
+Query permission does not grant exact-read permission.
 
-授权发生在状态披露、OperationID replay 和 mutation 裁决之前，且外部 Authorizer
-永不在 Core 锁或 Store transaction 内调用。实例装配把该 Authorizer 绑定到本 owner
-当前持久 Realm 联系：断连、错 Realm 或无法核验返回不可用，不压成拒绝或不存在。
-Core 不导出无 actor 的 existence probe。
-Composition 以显式 service actor 调用 ReadFacetProposal／ReadFacetAttachment，只投影实际 Core cut、存在性及附着证据，不披露空间记录。
+Authorization precedes disclosure, OperationID replay, and mutation decisions. External
+Authorizer calls never occur under the Core lock or Store transaction. Instance assembly binds
+the authorizer to this owner's current persistent Realm contact. Disconnection, wrong Realm,
+or unverifiable evidence is unavailable, not denial or absence. Core exports no actor-free
+existence probe. Composition uses explicit service actors for ReadFacetProposal/ReadFacetAttachment,
+projecting actual Core cut, existence, and attachment evidence without spatial records.
 
-## 双 Core 本地挂载控制
+## Local two-Core mount control
 
-P2 只支持一条挂载：A 拥有空的普通锚 M，空 B 接纳 M 下方内容。
-M 本身仍归 A；B 只保留外部父上下文与已接纳 Range，不复制 M、不占其 UUID，也不造伪根。
-B 对直接内容继续做精确包覆校验。
+The original P2 profile supports one mount: A owns an empty ordinary Anchor M; empty B accepts
+contents below it. M remains A's. B retains external-parent context and accepted Range without
+copying M, claiming its UUID, or inventing a root. B exactly checks direct-content containment.
 
-控制接口分为四类：`ApplyMount` 提交建立／修改／撤销；`ReadMount` 与
-`ReadMountOperation` 只读状态及原始结果；`RecoverMounts` 推进已有未完成义务；
-`UpdateMountNextHop` 维护本方向指定地址。恢复是显式的一轮推进，没有后台循环或超时自动解锁。
-可信装配使用 `ConfigureMountTransport` 和受限 `MountPeer`，应用不能以这些本地端口冒充网络认证。
+Control operations are `ApplyMount` for establishment/change/revocation,
+`ReadMount` and `ReadMountOperation` for state/original outcomes,
+`RecoverMounts` for unfinished obligations, and `UpdateMountNextHop` for this direction's
+address. Recovery advances one explicit round; there is no background loop or timeout unlock.
+Trusted assembly uses `ConfigureMountTransport` and restricted `MountPeer`; these local
+ports are not substitutes for network authentication.
 
-范围修改先关闭 B 的新写门，再由 A 作出终局，B 确认终局后开门；
-断连保留待处理状态。精确旧回执仍可重放，因写门拒绝的新请求不占用 OperationID。
-普通 M Pose／Parent 更新不改 B 的局部事实；M 的 Range 变化必须走控制操作。
-撤销明确区分 A 关闭入口与 B 停写，Detached 保留 B 内容，不等于删除或迁移完成。
+A Range change first closes B's new-write gate, then A decides, and B reopens only after
+confirming that decision. Disconnection retains pending state. Old exact receipts remain
+replayable; new requests rejected by the gate do not claim OperationID.
+Ordinary M Pose/Parent changes leave B's local facts unchanged; Range changes require control.
+Revocation distinguishes A closing entry from B stopping writes. Detached retains B's content;
+it is neither deletion nor completed migration.
 
-双方使用各自已建立的 caller 与 owner-qualified scope。新提交重新检查原调用者权限；
-精确匹配的既有收尾义务不因随后撤权而遗失。地址与稳定 Ref 一起限定目标，
-只用关系指定的下一跳；改址可在控制等待中执行，不改变 Element、MountKey 或 Admission。
-Element、挂载意图、地址操作共用本 Core 的 OperationID 命名空间和 CoreReadCut；
-纯控制提交不增加 Element Revision。
+Both sides use established callers and owner-qualified scopes. New commits recheck original
+caller permission; exact existing settlement obligations are not lost after revocation.
+Address plus stable Ref identify the target; only the relation's specified NextHop is used.
+Address repair may occur during control waits without changing Element, MountKey, or Admission.
+Element, mount intent, and address operations share this Core's OperationID namespace and
+CoreReadCut. Control-only commits do not increment Element Revision.
 
-owner-local 读取面不自动转成组合读取：本地 ListDirect 遇到挂载内容、QueryRegion 的闭包包含远端覆盖，
-或把 B 的外部父作为本地查询边界时，明确返回 `ErrMountContextRequired`，不误报为空或完整。
-P3 用单独的沿路径读取面明确请求连接空间。
+Owner-local reads do not silently become composed reads. ListDirect encountering mounted
+contents, QueryRegion covering remote contents, or a local query bounded by B's external
+parent returns `ErrMountContextRequired`, not empty or complete. P3 explicitly requests
+connected space through separate path operations.
 
-跨模块证明见[双 Core 控制](../acceptance/mount_control_test.go)、
-[并发与恢复](../acceptance/mount_recovery_test.go)；各持久步骤的故障与损坏验证见
-[提交故障](internal/commit/mount_store_atomicity_test.go)、[历史损坏](internal/commit/mount_store_corruption_test.go)。
+Evidence: [two-Core control](../acceptance/mount_control_test.go),
+[concurrency/recovery](../acceptance/mount_recovery_test.go),
+[commit faults](internal/commit/mount_store_atomicity_test.go), and
+[history corruption](internal/commit/mount_store_corruption_test.go).
 
-## 沿挂载路径读取与查询
+## Reads and queries along mount paths
 
-P3 的 ResolvePath、ListDirectPath、QueryRegionPath 从显式入口锚出发，沿真实父子关系
-读取路径、列举直接内容或执行空间查询。挂载本身不增加结构深度；M 的记录始终来自 A，
-其下内容来自 B。只连接挂载关系指定的 NextHop 并核对目标稳定身份，不按裸 Ref 查目录。
-可信装配用 ConfigureConnectedTransport、ConnectedPeer 接线，不把本地身份绑定当成网络认证。
+P3 ResolvePath, ListDirectPath, and QueryRegionPath start from an explicit entry Anchor and
+follow actual parent-child relations. Mounts add no structural depth: M's record comes from A,
+its contents from B. Connections use the relation's NextHop and verify stable target identity,
+without a bare-Ref directory. ConfigureConnectedTransport/ConnectedPeer are trusted local
+assembly, not network authentication.
 
-首请求固定一个 ConnectedCut 的范围、来源和读取方式，后续页面与同 cut 的路径读取不能扩大
-原有可读范围或悄悄加入新来源。必要来源全部启用保留才使用 Retained；混合配置整体使用
-CurrentVerified。每次披露仍独立核验各 owner 的权限、当前挂载效力和所用地址关系。
-数据快照不是授权快照，Query 许可也不等于完整记录读取许可。
+The first request fixes ConnectedCut scope, sources, and read mode. Later pages and same-cut
+path reads cannot expand scope or silently add sources. Retained requires all necessary sources
+to enable retention; mixed configurations use CurrentVerified throughout. Every disclosure
+independently checks each owner's permissions, current mount validity, and contact relation.
+A data snapshot is not an authorization snapshot; Query permission does not grant full reads.
 
-必要来源失联使请求明确失败；非必要覆盖无法验证时明确标记 Partial／Gap，不返回伪空集。
-快照或原 cut 过期要求重查；已成立的上下文失去非必要覆盖时终止续页，不用恢复后的内容拼补旧结果。
-ReleaseConnectedCut 释放上下文；未主动释放的保留状态按期限安全回收。
-这只是单条挂载、两个可信本地 Core 的实现范围，不是跨机器或任意嵌套联邦。
+Necessary-source failure explicitly fails the request. Unverifiable optional coverage is
+Partial/Gap, not an empty set. Expired snapshot/original cuts require a new query. Loss of
+optional coverage ends continuation; recovered content cannot patch an old result.
+ReleaseConnectedCut releases the context; unreleased retained state expires safely.
+This P3 profile is one mount between two trusted local Cores, not real multi-host or arbitrary
+nested federation; later network profiles have separate contracts and evidence.
 
-## 同原始 Store 的单写交接
+## Single-writer handoff on the original Store
 
-P7.1 已实现并通过完整验证，交付／验收状态见开发计划；依据为
-[P7 总合同第 6 节](../docs/architecture/owner-transition-contract.md#6-同-owner-writer-handoff)。
-`c.Writer().InspectWriter/HandoffWriter` 返回实际控制结果，SDK 的 `Writer()` 使用同一 gRPC 服务。
-控制依赖已启用的 PublicAccessPolicy 与可信授权 view；每次独立检查
-`AuthorityScope(c.AuthorityRef())` 上的 `ucupa.core.writer.inspect` 或 `ucupa.core.writer.handoff`，
-普通元素、closure 和只读委托权限不能替代。检查状态与精确重试不会因源已 fence 而被一并关死。
+P7.1 implements the same-domain profile in [P7 §6](../docs/architecture/owner-transition-contract.md#6-同-owner-writer-handoff).
+Delivery/acceptance and full validation are recorded in the plan.
+`c.Writer().InspectWriter/HandoffWriter` returns actual control results; SDK `Writer()`
+uses the same gRPC service. Control requires enabled PublicAccessPolicy and a trusted
+authorization view. Independently check `ucupa.core.writer.inspect` or
+`ucupa.core.writer.handoff` on `AuthorityScope(c.AuthorityRef())`; Element, closure, and
+read-delegation permission do not substitute. Fencing does not disable inspection/exact retry.
 
-`Config.Writer` 只含交接开关与可选安装资格；开关在新建 durable Store 时随初始事务记录，普通重开必须保持一致。
-交接在原事务内关闭当前 epoch 并固定 final cut，后续写和旧读取／快照／观察不再披露事实。
-指定实例独占打开同一原始 Store、验证私有安装资格后推进一次 epoch；身份、UUID、事实、签名材料和
-原业务操作结果保留，普通重启不推进 epoch。新建内存 Core 不接受 Writer 配置。
-交接关闭的 Store 不能事后开启，不靠启动时自动补值；这不是复制库、回滚或失联自动接管。
-启动字段、秘密保管和网络调用见 [Core 宿主](../cmd/ucupa-core/README.md#单写交接)。
+`Config.Writer` contains only the handoff switch and optional installation qualification.
+The initial durable transaction records the switch; ordinary reopen must match.
+Handoff closes the current epoch and fixes the final cut in the original transaction.
+Subsequent writes and old reads/snapshots/observations stop disclosing facts.
+The designated instance exclusively opens the same original Store and verifies private
+installation qualification before advancing epoch once. Identity, UUIDs, facts, signing
+material, and original business outcomes remain; ordinary restart does not advance epoch.
+In-memory creation rejects Writer configuration. A handoff-disabled Store cannot be enabled
+later or patched at startup. This is not copied storage, rollback, or outage takeover.
+See the [Core host](../cmd/ucupa-core/README.md#single-writer-handoff) for fields, secret handling,
+and network use.
 
 ## Durable Store
 
-New 建立内存 Core；CreateDurable/OpenDurable/Close 管理同语义的 bbolt
-Store。创建时由可信初始化给出 RealmID＋local 地址并先行核验后绑定身份；重开只从
-原 Store 恢复并核对联系，配置不能覆盖或补建。唯一精确 marker 是：
+New creates an in-memory Core; CreateDurable/OpenDurable/Close manage the equivalent bbolt
+profile. Trusted creation supplies RealmID and local address, verifies the connection, then
+binds identity. Reopen restores and checks the contact from the original Store; configuration
+cannot override or invent it. The sole exact marker is:
 
     ucupa.core.local@9c4f2a6e8b1d7350f6a3c9e2b7d4f1a8
 
-New／CreateDurable 各生成一次独立 `FactAuthorityRef`；OpenDurable 只恢复它，不重新生成。
-`AuthorityRef()` 供可信本地装配读取身份，不是可用性证明或远端认证。
-Store 原子持久化 self Ref、私有 scope、持久 Realm 联系、current cut、记录、tombstone、Revision、OperationID binding、
-retained outcome 与按 cut 排序的提交序列。Element 提交和控制推进共享该序列；
-控制事件持久保存原输入与外部结果，使用同一转换器恢复控制状态，不另维护可变事实副本。
-拒绝、不变及精确重放不追加 fact commit，但需要保留的原始结果仍入库。
-reopen 重放同时验证全部成功与非变更回执，
-并在每次 persist／reload 核对原 self Ref、私有 scope 与持久 Realm 联系，缺联系记录的 Store 拒绝打开。不存在旧 marker
-reader、迁移、兼容分支或 predecessor-profile error。
+New/CreateDurable generate an independent `FactAuthorityRef` once; OpenDurable only restores it.
+`AuthorityRef()` supports trusted local identity assembly, not availability proof or remote
+authentication.
 
-包内线性 scanIntersecting 是 QueryRegion 与未来空间索引的 conformance oracle，不是公共 API。
-P3 的快照和连接查询上下文只存在于内存，不增加 Store 字段或持久游标；Close 对内存和持久化
-Core 都结束本次运行，重新打开不会复活旧查询句柄。P6 的公共联邦已支持按指定挂载联系嵌套发现、
-读取、列举与有限观察，网络由 transport／SDK 和独立宿主适配，不进入 owner 内核。
-真实跨机器环境尚未验证；不实现独立 route/referral、Facet successor、永久事件流、空间索引、
-displayName、文本路径或生产运行面。当前网络交付与测试边界见[开发计划](../docs/architecture/development-plan.md)。
+The Store atomically persists self Ref, private scope, Realm contact, current cut, records,
+tombstones, Revisions, OperationID bindings, retained outcomes, and cut-ordered commit history.
+Element and control commits share that sequence. Control events retain original input and
+external results; the same transition rules reconstruct control state without a writable mirror.
+Rejected, unchanged, and replayed operations add no fact commit, but retained outcomes persist.
+Reopen validates successful and non-mutating receipts. Persist/reload recheck self Ref, scope,
+and Realm contact; missing contact rejects open. There is no old-marker reader, migration,
+compatibility branch, or predecessor-profile error.
+
+The private linear scanIntersecting is the QueryRegion/future-index conformance oracle,
+not public API. P3 snapshots/connected contexts are run-local, with no Store fields or durable
+cursor. Close ends both in-memory and durable runs; reopen revives no old query handles.
+P6 public federation supports nested discovery, reads, listing, and finite observation through
+specified mount contacts. Transport/SDK and independent hosts adapt networking outside the kernel.
+No independent route/referral, Facet-successor lookup, permanent event stream, spatial index,
+displayName, text path, or production operating surface is implemented. See the plan for
+current network delivery, selected two-host evidence, and remaining validation limits.
