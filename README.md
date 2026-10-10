@@ -71,9 +71,9 @@ each scenario proves. Success requires all five output lines and exit code 0.
 
 UCUPA is currently an **engineering prototype**. Its Baseline has been completed and accepted
 within the declared scope. The [snapshot status](docs/architecture/development-plan.md#1-当前在哪里)
-summarizes its supported profiles and validation limits. The source publication repository uses
-independent Git history; the private development history is not included. Public release remains
-separate from private repository preparation.
+summarizes its supported profiles and validation limits. The
+[public source repository](https://github.com/EthanSi2021/UCUPA) uses independent Git history;
+the private development history is not included.
 
 Local frames use finite numeric profiles; they do not imply unlimited capacity or precision.
 Network and transfer support covers defined profiles, not arbitrary topologies. The Baseline
@@ -111,7 +111,7 @@ Third-party components remain subject to their respective licenses and notices. 
 
 ## Security
 
-See the [security policy](SECURITY.md) for private vulnerability reporting and what to include
-in a report. GitHub private vulnerability reporting is the designated channel; enabling and
-verifying it is part of the public release gate. Do not put vulnerability details, credentials,
-private keys, or real deployment configuration in public issues, screenshots, or recordings.
+GitHub private vulnerability reporting is enabled for this repository. See the
+[security policy](SECURITY.md) for the reporting entry and what to include in a report. Do not
+put vulnerability details, credentials, private keys, or real deployment configuration in public
+issues, screenshots, or recordings.

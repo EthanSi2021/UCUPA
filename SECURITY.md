@@ -5,13 +5,12 @@ test run does not establish the absence of vulnerabilities.
 
 ## Report a vulnerability
 
-The designated channel is GitHub private vulnerability reporting. On the
+GitHub private vulnerability reporting is enabled for this repository. On the
 [repository's security advisories page](https://github.com/EthanSi2021/UCUPA/security/advisories),
 select **Report a vulnerability** to send a private report to the maintainers.
 
 If that option is unavailable, the reporting channel is not active. Keep the
 details private; do not use a public issue, discussion, or pull request as a fallback.
-Enabling and verifying this channel is part of the public release gate.
 
 Include the affected commit or version, relevant configuration, reproduction
 steps, expected and actual behavior, and potential impact. Use synthetic data

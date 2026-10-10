@@ -4,12 +4,11 @@ This is the sole current status and gate map. It does not define domain semantic
 new features, or replace the [architecture authority manifest](README.md).
 
 The implementation Baseline comprises Stage 1 and Stage 2 and was accepted within its declared
-scope. This source snapshot is prepared for public release in an independent Git repository on
-`main`. The independent initial commit has been pushed to
-[EthanSi2021/UCUPA](https://github.com/EthanSi2021/UCUPA), which remains private. No history from
-the development repository was imported. The user has authorized the security-policy commit,
-public release, and activation of GitHub private vulnerability reporting. Execution and verification
-of those publication steps are in progress; no completed public release is claimed yet.
+scope. This source snapshot was published on 2026-10-10 in an independent Git repository on
+`main` at [EthanSi2021/UCUPA](https://github.com/EthanSi2021/UCUPA). The repository is public,
+and GitHub private vulnerability reporting is enabled and verified. No history from the
+development repository was imported. This is source publication, not a production-readiness
+claim or a versioned binary release.
 
 <a id="1-当前在哪里"></a>
 
@@ -80,12 +79,13 @@ performance, automatic high availability, or completion of every longer-term dir
 4. Completed: confirm the GitHub destination, private visibility, empty remote, and account write permission.
 5. Completed: create the independent initial commit and push `main` to the private destination;
    verify that local and remote `main` agree and that the repository remains private.
-6. Completed locally: prepare the [security policy](../../SECURITY.md) and README guidance;
+6. Completed: commit and push the [security policy](../../SECURITY.md) and README guidance;
    select GitHub private vulnerability reporting without publishing a personal contact address.
-7. Authorized and in progress: commit and push the policy, make the repository public, and
-   enable and verify GitHub private vulnerability reporting. The public channel is not yet active.
+7. Completed with explicit authorization: make the repository public and enable GitHub private
+   vulnerability reporting; verify anonymous repository access and the reporting status.
 
-No release tag, active reporting endpoint, or public publication result is invented by this snapshot.
+No release tag or binary distribution was created. Source publication does not authorize a new
+feature phase, website deployment, or additional hosted service.
 The website remains a separate project; its diagrams are illustrative, not live service evidence.
 
 ### Local preparation checks
@@ -130,11 +130,13 @@ private upload, matching local and remote `main`, and an unchanged original deve
 
 The security-policy preparation adds only `SECURITY.md` and updates the root README and this
 plan. Content, local links, whitespace, and the unchanged implementation bytes were checked;
-this documentation-only step does not claim a new full runtime verification. The user has now
-authorized committing and pushing these policy edits, making the repository public, and enabling
-and verifying GitHub private vulnerability reporting. The repository is still private at this
-preparation point; successful publication will be recorded only after checking the actual remote
-state. No personal email address or response-time commitment was introduced.
+this documentation-only step does not claim a new full runtime verification. With explicit user
+authorization, the policy was committed and pushed, the repository was made public, and GitHub
+private vulnerability reporting was enabled. The enable request returned HTTP 204; authenticated
+and anonymous checks both returned `enabled: true`, and anonymous repository metadata confirmed
+public visibility. The README, security policy, and this plan were then synchronized with those
+actual results. No personal email address or response-time commitment was introduced, and no
+test vulnerability report or public security advisory was submitted.
 
 <a id="6-stage-2realm-授权访问链"></a>
 
