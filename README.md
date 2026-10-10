@@ -111,6 +111,7 @@ Third-party components remain subject to their respective licenses and notices. 
 
 ## Security
 
-No private security-reporting channel is configured in this local snapshot. One must be confirmed
-before public release. Do not put vulnerability details, credentials, private keys, or real deployment
-configuration in public issues, screenshots, or recordings.
+See the [security policy](SECURITY.md) for private vulnerability reporting and what to include
+in a report. GitHub private vulnerability reporting is the designated channel; enabling and
+verifying it is part of the public release gate. Do not put vulnerability details, credentials,
+private keys, or real deployment configuration in public issues, screenshots, or recordings.

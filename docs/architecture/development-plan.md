@@ -5,9 +5,11 @@ new features, or replace the [architecture authority manifest](README.md).
 
 The implementation Baseline comprises Stage 1 and Stage 2 and was accepted within its declared
 scope. This source snapshot is prepared for public release in an independent Git repository on
-`main`. Its destination is [EthanSi2021/UCUPA](https://github.com/EthanSi2021/UCUPA), which must
-remain private during the authorized initial upload. No history from the development repository
-was imported. Public release has not been authorized.
+`main`. The independent initial commit has been pushed to
+[EthanSi2021/UCUPA](https://github.com/EthanSi2021/UCUPA), which remains private. No history from
+the development repository was imported. The user has authorized the security-policy commit,
+public release, and activation of GitHub private vulnerability reporting. Execution and verification
+of those publication steps are in progress; no completed public release is claimed yet.
 
 <a id="1-当前在哪里"></a>
 
@@ -76,11 +78,14 @@ performance, automatic high availability, or completion of every longer-term dir
 2. Completed: initialize this snapshot's own empty Git repository on `main`, with explicit authorization.
 3. Completed: freeze the exact source file set and pass the full verifier from the new repository root.
 4. Completed: confirm the GitHub destination, private visibility, empty remote, and account write permission.
-5. Authorized: create the independent initial commit and push `main` to that private destination;
-   the Git references record the actual commit and synchronization result.
-6. Next: confirm a private security-reporting channel and obtain separate authorization for public release.
+5. Completed: create the independent initial commit and push `main` to the private destination;
+   verify that local and remote `main` agree and that the repository remains private.
+6. Completed locally: prepare the [security policy](../../SECURITY.md) and README guidance;
+   select GitHub private vulnerability reporting without publishing a personal contact address.
+7. Authorized and in progress: commit and push the policy, make the repository public, and
+   enable and verify GitHub private vulnerability reporting. The public channel is not yet active.
 
-No release tag, security contact, or public publication result is invented by this snapshot.
+No release tag, active reporting endpoint, or public publication result is invented by this snapshot.
 The website remains a separate project; its diagrams are illustrative, not live service evidence.
 
 ### Local preparation checks
@@ -120,8 +125,16 @@ files. Read-only GitHub checks confirmed the specified account's write permissio
 private destination. The user then authorized the initial commit and private push. Commit
 metadata uses the specified GitHub account alias and its no-reply address rather than a personal
 email address. This does not add a personal copyright attribution. The actual commit and remote
-synchronization state are recorded by Git, not predicted by this document. Public release still
-requires the separate decisions and authorization listed above.
+synchronization state are recorded by Git. Subsequent checks confirmed the initial commit's
+private upload, matching local and remote `main`, and an unchanged original development workspace.
+
+The security-policy preparation adds only `SECURITY.md` and updates the root README and this
+plan. Content, local links, whitespace, and the unchanged implementation bytes were checked;
+this documentation-only step does not claim a new full runtime verification. The user has now
+authorized committing and pushing these policy edits, making the repository public, and enabling
+and verifying GitHub private vulnerability reporting. The repository is still private at this
+preparation point; successful publication will be recorded only after checking the actual remote
+state. No personal email address or response-time commitment was introduced.
 
 <a id="6-stage-2realm-授权访问链"></a>
 
