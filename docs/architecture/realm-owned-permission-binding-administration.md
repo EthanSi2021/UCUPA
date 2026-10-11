@@ -11,7 +11,7 @@ current six-bucket Realm Store representation. This contract remains the
 authority for binding administration; it is no longer the complete current
 Realm surface by itself.
 
-The accepted [P4 local Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-权限)
+The accepted [P4 local Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-permissions)
 supersedes only the remaining Facet scope profile, codec and private marker:
 namespace and key scopes now include the receiving Facet owner. This contract
 continues to own binding administration; earlier scope examples are not alternate

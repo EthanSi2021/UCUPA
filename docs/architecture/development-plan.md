@@ -194,8 +194,118 @@ diff whitespace, and byte preservation of every non-documentation file. The orig
 development workspace is unchanged. On Windows, `go run ./cmd/verify -checks-only` reported
 0 errors and 0 responsibility reviews; runtime gates were not rerun for these prose-only edits.
 
-The Chinese axioms and domain contracts remain unchanged and authoritative. Their English
-translation is a separate second batch, not an implied change of semantics or authority.
+At the end of the first batch, the Chinese axioms and domain contracts remained unchanged
+and authoritative. Their English translation is a separate second batch, not an implied
+change of semantics or authority.
 The user has authorized a local commit of this first batch, followed by the second batch.
 Git records the actual commit state. No push is authorized in this step; the second batch
 remains documentation-only and must preserve the accepted semantics and implementation scope.
+
+## 10. English documentation: second batch reviewed
+
+The first batch is committed locally as `42740d7`; it has not been pushed. The second batch
+starts from that clean commit and does not authorize implementation or a remote update.
+
+The first completed unit is the
+[foundational axioms](ucupa-foundational-axioms.md) and
+[concept and mainline baseline](ucupa-concept-mainline-baseline.md). Their English text replaces
+the two language-suffixed files, with incoming paths and heading anchors updated together.
+The authority manifest retains its original precedence and one current definition; this is
+a language replacement, not a new set of axioms or target semantics.
+
+All A1–A10 and D1–D12 decisions, falsifiability gates, examples, formulas, and boundaries are
+retained. The Realm contact supplement's former pending-implementation statement is explicitly
+historical; current delivery scope remains in this plan and the existing contracts.
+
+The second completed unit is the [Core local spatial-truth contract](core-local-spatial-truth.md)
+and [Core local spatial-query contract](core-local-query.md), translated in place. The original
+G1 slice's limits remain explicitly distinguished from the entire current Core; its successors
+retain their existing responsibilities. Numeric rules, formulas, API examples, permission and
+error identifiers, decision order, snapshot lifecycle, and acceptance conditions are preserved.
+The historical slice marker and Go declarations are not rewritten as today's implementation
+format or constructor signatures.
+
+The third completed unit is the [Core mount contract](core-mount-contract.md) and
+[Core–Facet fact and lifecycle contract](facet-local-truth-and-core-lifecycle.md), translated
+in place. Stable identity, directional contacts, independent owner commits, control and
+attachment state machines, F0 read checks, original outcomes, dual query modes, and failure
+boundaries are preserved. P2/P3/P4 limits are distinguished from explicitly named successors;
+P4's former source-file mapping is now expressly historical, not a claim about today's layout.
+
+The fourth completed unit is the [public-access and fact-observation contract](public-access-and-observation.md)
+and [ownership-continuity and lifecycle contract](owner-transition-contract.md), translated in
+place. The five public behavior categories, explicit entry and closure authorization, independent
+Facet permissions, prepared reads, bounded observation, GAP/UNAVAILABLE distinctions, opaque
+content, and original-outcome recovery are preserved. Ownership transitions retain exact
+operation binding, irreversible fences, acceptance and installation obligations, persistent
+continuity evidence, and first-supported versus conditional external-edge profiles. Historical
+design commits are identified as original development history, not commits in this public
+snapshot. Obsolete P5 delivery-record section numbers now refer to the development plan without
+an incorrect section anchor; the P7.3a opaque-content revision remains explicit.
+
+The fifth completed unit is the [network-access contract](network-access-contract.md) and
+[RealmAttachment contract](realm-attachment-contract.md), translated in place. Target identity,
+online caller and view checks, bounded network evidence, query composition, persistent owner
+contacts, same-Realm repair, contact-generation checks, and lock-free authorization waits with
+final fact-boundary guards are preserved. Original P6 checkpoints are explicitly historical
+where the same contract already records later delivery. The former JSON-payload wording now
+matches the accepted opaque-content rule: exact Payload bytes, not type-schema validation.
+
+All ten specifications and contracts in this second batch now have English bodies. The other
+Realm and Store contract bodies were already English; their reference-only edits do not claim
+new translations or new capabilities. This corrects the earlier, overbroad statement that all
+network, Realm, and Store contracts remained untranslated. Continue from the existing authority
+manifest and plan, not a parallel definition or new implementation phase.
+
+Checks passed for the first unit: 289 local links/anchors, unchanged heading levels and numbered
+clause sequences, preserved technical identifiers and non-diagram example bodies (apart from
+translated comments), and clean diff whitespace. The two specifications retain respectively
+17/39 headings, 12/132 numbered clauses, and 2/19 fenced examples. All non-documentation bytes
+remain unchanged; the original private workspace was not modified.
+
+Checks passed for the second unit: local links/anchors, heading levels, numbered clause sequences,
+technical identifiers, numerical formulas, and fenced examples, including the unchanged Go API
+block. The spatial/query contracts retain respectively 32/11 headings, 16/30 numbered clauses,
+and 17/1 fenced examples. At that unit's completion, 291 local links/anchors were checked.
+Only these two contracts and this plan changed during the second unit; the earlier unit's work
+was preserved. All non-documentation bytes and the original private workspace remain unchanged.
+
+Checks passed for the third unit: 293 local links/anchors, heading levels, numbered clause
+sequences, technical identifiers, API/state-machine examples, diff whitespace, and byte
+preservation. The mount/Core–Facet contracts retain respectively 32/25 headings, 19/18 numbered
+clauses, 9/17 fenced examples, 100/108 list items, and 129/33 table rows. Human-readable diagrams,
+labels, and comments are translated; executable signatures and state-machine transitions are
+preserved. Five other documents have only incoming heading-reference repairs. Earlier work,
+all non-documentation bytes, and the original private workspace remain unchanged.
+
+Checks passed for the fourth unit: 295 local links/anchors, unchanged heading levels and numbered
+clause sequences, retained technical identifiers, diff whitespace, and byte preservation.
+The public-access/ownership contracts retain respectively 27/25 headings, 17/14 numbered
+clauses, 1/0 fenced examples, 17/13 list items, and 111/74 table rows. The human-readable public
+behavior diagram is translated; machine identifiers and the transition sequence are preserved.
+Four other documents have only incoming heading-reference repairs. Earlier second-batch work,
+all non-documentation bytes, and the original private workspace remain unchanged.
+
+Checks passed for the fifth unit and whole-batch review on 2026-10-11: 297 local links/anchors,
+heading levels, numbered clause sequences, technical identifiers, numeric constraints, table
+structure, and diff whitespace. The network/RealmAttachment contracts retain respectively
+23/14 headings, 17/7 numbered clauses, 0/1 fenced examples, 34/9 list items, and 67/50 table rows.
+Two other documents have only incoming network-heading repairs. The final review also translated
+one remaining human-readable comment in the existing mount example; its identifiers are unchanged.
+Earlier second-batch work is otherwise preserved.
+
+The whole-batch review checked terminology, authority, original slice versus successor scope,
+and historical versus current implementation claims. All ten translated specifications/contracts
+retain their section structure, technical identifiers, and executable examples; human-readable
+diagrams and comments are English. Remaining Chinese characters in Markdown occur only in
+preserved navigation fragment IDs and links to them, not reader-facing prose. No parallel Chinese
+specification remains. All non-documentation bytes, license files, and the original private
+development workspace are unchanged.
+
+On Windows, `go run ./cmd/verify -checks-only` reported 0 errors and 0 responsibility reviews.
+Runtime gates were not rerun for these documentation-only edits; this is not fresh code or runtime
+acceptance. The second batch and its technical documentation review are complete. On 2026-10-11,
+the user approved the reviewed batch and authorized its local commit. This progress record is
+included in that documentation commit; Git records the actual commit state. The translation and
+review baseline is `42740d7`. No push, new branch, or implementation phase is authorized by this
+step.

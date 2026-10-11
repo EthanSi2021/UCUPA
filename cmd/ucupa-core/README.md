@@ -254,7 +254,7 @@ Query/List support multi-source prepared Observe with independent per-source com
 and an aggregate entry cursor. Exact Read preparation observes actual path/target, not
 unrelated Elements. Historical receipts cannot retroactively prepare.
 Source disclosure, completeness, mixed retention, and reclamation follow
-[network contract §8.5](../../docs/architecture/network-access-contract.md#85-公共联邦的来源投影与组合已交付).
+[network contract §8.5](../../docs/architecture/network-access-contract.md#85-public-federation-source-projection-and-composition-delivered).
 
 ### Mount approval exchange
 

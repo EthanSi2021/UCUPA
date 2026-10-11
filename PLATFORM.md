@@ -5,8 +5,8 @@ This document has no specification or implementation authority and does not auth
 
 This document presents UCUPA through its purpose, truth categories, and module organization.
 Normative semantics come only from the accepted
-[foundational axioms](docs/architecture/ucupa-foundational-axioms.zh-CN.md) and
-[concept and mainline baseline](docs/architecture/ucupa-concept-mainline-baseline.zh-CN.md).
+[foundational axioms](docs/architecture/ucupa-foundational-axioms.md) and
+[concept and mainline baseline](docs/architecture/ucupa-concept-mainline-baseline.md).
 Read the current contracts in the [authority manifest](docs/architecture/README.md) for delivered
 bounded capabilities, and the [snapshot status](docs/architecture/development-plan.md#1-当前在哪里)
 for implementation and validation limits.

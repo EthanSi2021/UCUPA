@@ -190,7 +190,7 @@ nested federation; later network profiles have separate contracts and evidence.
 
 ## Single-writer handoff on the original Store
 
-P7.1 implements the same-domain profile in [P7 §6](../docs/architecture/owner-transition-contract.md#6-同-owner-writer-handoff).
+P7.1 implements the same-domain profile in [P7 §6](../docs/architecture/owner-transition-contract.md#6-same-owner-writer-handoff).
 Delivery/acceptance and full validation are recorded in the plan.
 `c.Writer().InspectWriter/HandoffWriter` returns actual control results; SDK `Writer()`
 uses the same gRPC service. Control requires enabled PublicAccessPolicy and a trusted

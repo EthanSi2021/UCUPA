@@ -4,7 +4,7 @@
 implemented; slice closed**
 
 P4 successor notice: the accepted
-[Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-权限)
+[Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-permissions)
 has replaced the remaining Facet scope profile and its private Realm marker.
 The P4/P5 marker was `ucupa.realm.local@247057c2b3804bd989a1ef1c9e181f27`;
 literal marker/Facet-scope examples below describe this contract's earlier

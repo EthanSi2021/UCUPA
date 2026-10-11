@@ -147,7 +147,7 @@ The verifier never produces a trusted caller by itself. Composition verifies bot
 the signature and authenticated issuer liveness before target-local establishment;
 the target still checks its own bindings. Issuer/key configuration does not modify
 the Store. Core transport owns challenges, network sessions and restricted grants.
-See the [network contract](../docs/architecture/network-access-contract.md#82-显式身份签发信任已交付).
+See the [network contract](../docs/architecture/network-access-contract.md#82-explicit-identity-issuer-trust-delivered).
 
 S2P3a adds the module's network service boundary beside the unchanged kernel.
 `transport/grpc` serves the three typed services (target check, identity,

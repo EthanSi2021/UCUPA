@@ -15,7 +15,7 @@ Store-recognition authority. This body's statements that call this correction cu
 administration as absent remain accurate records of their as-built scope; they
 are not current repository status and define no compatibility input.
 
-The accepted [P4 local Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-权限)
+The accepted [P4 local Core/Facet increment](facet-local-truth-and-core-lifecycle.md#7-authority-qualified-permissions)
 also supersedes this body's remaining unqualified Facet scope examples and codec.
 The exact PrincipalRef + PermissionID + OperationScope model remains unchanged;
 no predecessor scope constructor or Store reader remains current.

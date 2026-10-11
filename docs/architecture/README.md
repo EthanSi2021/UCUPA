@@ -9,8 +9,8 @@ The accepted Baseline is an engineering prototype; current status and publicatio
 
 | Priority or role | Source | Responsibility |
 |---|---|---|
-| 1 | [Foundational axioms](ucupa-foundational-axioms.zh-CN.md) | System-level purpose, boundaries, and invariants |
-| 2 | [Concept and mainline baseline](ucupa-concept-mainline-baseline.zh-CN.md) | The detailed D1–D12 semantic specification |
+| 1 | [Foundational axioms](ucupa-foundational-axioms.md) | System-level purpose, boundaries, and invariants |
+| 2 | [Concept and mainline baseline](ucupa-concept-mainline-baseline.md) | The detailed D1–D12 semantic specification |
 | 3 | Accepted current implementation contracts below | Observable behavior only within their expressly implemented scopes |
 | Non-normative projection | [Platform](../../PLATFORM.md) and product READMEs | Reader-facing explanations, not competing specifications |
 | Dynamic plan | [Development plan](development-plan.md) | Current scope and next gate, not domain semantics |
@@ -18,8 +18,12 @@ The accepted Baseline is an engineering prototype; current status and publicatio
 
 A difference between the target specification and a bounded implementation contract is an
 implementation gap, not permission to reinterpret either silently. Contract acceptance is not
-authorization to implement additional behavior. Specifications retain their original languages;
-this English navigation does not create a normative translation.
+authorization to implement additional behavior. The foundational axioms and concept/mainline
+baseline now use their reviewed English text as the single current specification, preserving
+the accepted semantics rather than creating parallel definitions. The domain contracts below
+also use English as their single current text, retaining their accepted scopes and semantics.
+Language changes do not promote target semantics into implemented capabilities or authorize
+additional behavior.
 
 ## 2. Core contracts
 
@@ -60,7 +64,7 @@ cross-owner atomic transactions, or alternate Store readers.
 | [Permission-binding administration](realm-owned-permission-binding-administration.md) | Binding Put/Delete, aggregate CAS, original outcomes, and durable owner |
 | [Online caller authentication](realm-owned-online-caller-authentication.md) | Caller establishment, credential lifecycle, convergence, and Store recognition |
 | [Public access and observation](public-access-and-observation.md) | Caller/view and exact closure-scope increments without replacing the Realm-owned kernel |
-| [Ownership command authorization](owner-transition-contract.md#4-命令证据和权限) | Original caller and independent exact owner permissions for supported transitions |
+| [Ownership command authorization](owner-transition-contract.md#4-command-evidence-and-permissions) | Original caller and independent exact owner permissions for supported transitions |
 | [RealmAttachment](realm-attachment-contract.md) | Independent typed Realm product, finite caller/view/denial handles, online verification, and bounded Core/Facet network combinations |
 
 These contracts do not add global authorization state, offline Allow, copied permissions,

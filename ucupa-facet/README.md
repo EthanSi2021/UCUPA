@@ -109,7 +109,7 @@ commit twice. Read the plan for full validation status.
 
 ## Single-writer handoff on the original Store
 
-P7.1 implements only the same-domain profile in [P7 §6](../docs/architecture/owner-transition-contract.md#6-同-owner-writer-handoff).
+P7.1 implements only the same-domain profile in [P7 §6](../docs/architecture/owner-transition-contract.md#6-same-owner-writer-handoff).
 Full verification and acceptance are recorded in the plan.
 Call the actual namespace owner through `handle.Namespace.InspectWriter/HandoffWriter`;
 SDK callers use `Writer()`. Enabled PublicAccessPolicy accounts for control, and a trusted
